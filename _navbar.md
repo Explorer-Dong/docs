@@ -1,7 +1,7 @@
-* [哔哩哔哩](https://space.bilibili.com/1100962821)
+<!-- 导航栏_navbar.md -->
 
-* [枫雨在线](https://www.ifyzx.com)
+- [CSND](https://blog.csdn.net/qq_73408594?type=blog)
 
-* 友情链接
-  * [小枫社长](https://space.bilibili.com/1100962821)
-  * [枫雨在线](https://www.ifyzx.com)
+- 友情链接
+  - [技术支持](https://space.bilibili.com/1100962821)
+  - [模板源码](https://www.ifyzx.com)

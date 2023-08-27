@@ -1,7 +1,7 @@
-<!-- _sidebar.md -->
+<!-- 侧边导航栏_sidebar.md -->
 
-- 写在最前面
-  - [前言](README.md) <!--注意这里是相对路径-->
-- 第二个板块
-  - [Chapter-01](aa.md)
-  - [Chapter-02](bb.md)
+- Begin
+  - [自我介绍](/content/Begin.md)
+- Record
+  - [Web](/content/Web.md)
+  - [Algorithm](/content/Algorithm.md)

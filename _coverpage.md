@@ -1,9 +1,10 @@
-<!-- _coverpage.md -->
+<!-- 封面页_coverpage.md -->
 
-# 小枫社长de技术文档
+# 小 D 同学 の 技术文档
+
 > 这是一份计算机技术学习资料
 
-- Copyright © 2023 小枫社长 All Rights Reserved.
+- Copyright © 2023 小 D 同学 All Rights Reserved.
 
-[小枫社长](https://space.bilibili.com/1100962821)
-[开始阅读](README.md)
+[CSDN](https://blog.csdn.net/qq_73408594?type=blog)
+[开始阅读](/content/Begin.md)
