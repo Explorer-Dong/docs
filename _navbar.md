@@ -4,4 +4,4 @@
 
 - 友情链接
   - [技术支持](https://space.bilibili.com/1100962821)
-  - [模板源码](https://www.ifyzx.com)
+  - [模板源码](http://doc.ifyzx.com/#/./docs/Docsify/docsify)
