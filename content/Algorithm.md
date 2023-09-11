@@ -68,6 +68,78 @@ int main()
 }
 ```
 
+## 哈希表
+
+### 1. 分组
+
+https://www.acwing.com/problem/content/5182/
+
+> 存储不想同组和想同组的人员信息：存入数组，数据类型为一对字符串
+> 存储所有的组队信息：存入哈希表，数据类型为“键:字符串”“值:一对字符串”
+> 想要知道最终的分组情况，只需要查询数组中的队员情况与想同组 or 不想同组的成员名字是否一致即可
+> 时间复杂度 $O(n)$，空间复杂度 $O(n\ len(name))_{max}$
+```cpp
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+using namespace std;
+
+int main()
+{
+	int x;
+	cin >> x;
+	
+	vector<pair<string, string>> X(x);
+	
+	for (int i = 0; i < x; i ++)
+		cin >> X[i].first >> X[i].second;
+	
+	int y;
+	cin >> y;
+	
+	vector<pair<string, string>> Y(y);
+	
+	for (int i = 0; i < y; i ++)
+		cin >> Y[i].first >> Y[i].second;
+		
+	int sum;
+	cin >> sum;
+	
+	unordered_map<string, pair<string, string>> a;
+	
+	for (int i = 0; i < sum; i ++)
+	{
+		string s, t, p;
+		cin >> s >> t >> p;
+		a[s] = {t, p};
+		a[t] = {s, p};
+		a[p] = {s, t};
+	}
+	
+	int res = 0;
+	
+	// 想同组 
+	for (int i = 0; i < x; i ++)
+	{
+		string s = X[i].first, t = X[i].second;
+		if (a[s].first != t && a[s].second != t)
+			res ++;
+	}
+	
+	// 不想同组 
+	for (int i = 0; i < y; i ++)
+	{
+		string s = Y[i].first, t = Y[i].second;
+		if (a[s].first == t || a[s].second == t)
+			res ++; 
+	}
+	
+	cout << res << endl; 
+	
+	return 0;
+}
+```
+
 ## DFS
 
 ### 1. 机器人的运动范围
