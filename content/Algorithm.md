@@ -4,9 +4,9 @@
 
 https://www.acwing.com/problem/content/5167/
 
-- 每一个1都有三个边
-- 对于每一个1，判断左右是否也有1，如果有则减掉一条边
-- 对于奇数位的1，判断上 | 下是否有1，如果有也要减掉一条边
+> - 每一个1都有三个边
+> - 对于每一个1，判断左右是否也有1，如果有则减掉一条边
+> - 对于奇数位的1，判断上 | 下是否有1，如果有也要减掉一条边
 
 ```cpp
 #include <bits/stdc++.h>
@@ -67,6 +67,81 @@ int main()
 	return 0;
 }
 ```
+
+### 2. XOR Palindromes
+
+https://codeforces.com/contest/1867/problem/B
+
+> 题意：给定一个二进制字符串s长度为n，现在需要构造一个长度为n+1的字符串t，对于t中的每一位，即0<=i<=n的t[i]，如果将s中的数字0变为1或1变为0一共i次后，s成为了一个回文串，那么t[i]就是1，如果成为不了回文串就是0
+>
+> 输出：给出最终构造的t字符串
+>
+> 注意点：==对于回文问题，多考虑双指针算法==
+>
+> 思路：想要在改变了x（0<=x<=n）个数位后成为一个回文串，那么就要先统计当前的字符串s的回文情况。假如对称位置相同，那么可以不消耗改变次数或者消耗两次改变次数，假如对称位置不同，那么就必须要消耗一次改变次数。同时需要特判的是假如原串的字符数为奇数，那么中间的位置可以提供一个缓冲的机会，即假如被前面的两种情况消耗掉改变次数之后，还剩一次改变次数，那么就可以改变中间的字符。当然了假如改变完了中间的字符之后还是多了改变次数，那么就无法使得原串为回文串了。
+>
+> 时间复杂度：$O(n\log n)$
+
+```c++
+#include <iostream>
+using namespace std;
+
+int main()
+{
+	int T;
+	cin >> T;
+	
+	while (T--)
+	{
+		int n; cin >> n;
+		string s; cin >> s;
+		
+         // 判断原串是否为奇数个字符
+		bool odd = false;
+		if (n % 2) odd = true;
+		
+         // 双指针统计原串的对应情况
+		int l = 0, r = n - 1;
+		int same = 0, dif = 0;
+		while (l < r)
+		{
+			if (s[l] == s[r]) same ++;
+			else dif ++;
+			l ++, r --;
+		}
+		
+		// 对当前s的x个数位进行转换数字 
+		for (int x = 0; x <= n; x ++)
+             // 不同的对应位是一定要改变的
+			if (x < dif) cout << 0;
+			else
+			{
+				int aft = x - dif; // aft为消耗掉不同对应位次数后剩余的改变次数
+				for (int i = 2 * same; i >= 0; i -= 2) // 时间复杂度为log n
+					if (aft >= i)
+					{
+						aft -= i;
+						break;
+					}
+				
+                  // 此时为消耗掉不同对应位和相同对应位次数之后的剩余改变次数
+				if (aft > 1) cout << 0;
+				else if (aft == 1)
+				{
+					if (odd) cout << 1;
+					else cout << 0;
+				}
+				else cout << 1;
+			}
+		
+		cout << endl;
+	}
+	
+	return 0;
+}
+```
+
+
 
 ## 哈希表
 
@@ -189,10 +264,11 @@ public:
 https://www.acwing.com/problem/content/5168/
 
 > 搜索逻辑：分为正十字与斜十字
-
+>
 > 更新答案逻辑：需要进行两个条件的约数，一个是是否匹配到了最后一个字母，一个是转弯次数不超过一次
-
+>
 > 转弯判断逻辑：
+>
 >   1. 首先不能是起点开始的
 >   2. 对于正十字：如果next的行&列都与pre的行和列不相等，就算转弯
 >   3. 对于斜十字：如果next的行|列有和pre相等的，就算转弯
@@ -287,7 +363,7 @@ int main()
 
 ## DP
 
-### 1.对称山脉
+### 1. 对称山脉
 
 https://www.acwing.com/problem/content/5169/
 
@@ -387,3 +463,168 @@ int main()
 	return 0;
 }
 ```
+
+## 博弈论
+
+### 1. Salyg1n and the MEX Game
+
+https://codeforces.com/contest/1867/problem/C
+
+> tag：交互题+博弈+贪心
+>
+> 题面：对于给定n个数的数列，先手可以放入一个数列中不存在的数（0-1e9），后手可以从数列中拿掉一个数，但是这个数必须严格小于刚才先手放入的数。
+>
+> 终止条件：后手没法拿数或者操作次数达到了2n+1次
+>
+> 问：当你是先手时，如何放数可以使得最终数列的MEX值最大
+>
+> 思路：先手每次放入的数一定是当前数列的MEX值，此后不管后手拿掉什么数，先手都将刚刚被拿掉的数放进去即可。那么最多操作次数就刚好是2n+1次，因为加入当前数列就是一个从0开始的连续整数数列，那么先手放入的数就是最大数+1，即n，那么假如后手从n-1开始拿，后手最多拿n次，先手再放n次，那么就是2n+1次
+>
+> 时间复杂度：$O(n)$
+
+```c++
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+int main()
+{
+	int T; cin >> T;
+	
+	while (T--)
+	{
+		int n; cin >> n;
+		vector<int> a(n);
+		
+		for (int i = 0; i < n; i ++)
+			cin >> a[i];
+		
+		int mex = n;
+		for (int i = 0; i < n; i ++)
+			if (a[i] != i)
+			{
+				mex = i;
+				break;
+			}
+		
+		cout << mex << endl;
+		
+		int remove;
+		cin >> remove;
+		
+		while (remove != -1)
+		{
+			cout << remove << endl;
+			cin >> remove;
+		}
+	}
+	
+	return 0;
+} 
+```
+
+## 贪心
+
+### 1. green_gold_dog, array and permutation
+
+https://codeforces.com/contest/1867/problem/A
+
+> 题意：给定n个数a[i]，其中可能有重复数，请构造一个n个数的排列b[i]，使得c[i]=a[i]-b[i]中，c[i]的不同数字的个数最多
+>
+> 思路：思路比较好想，就是最大的数匹配最小的数，次大的数匹配次小的数，以此类推。起初我想通过将原数列的拷贝数列降序排序后，创建一个哈希表来记录每一个数的排位，最终通过原数列的数作为键，通过哈希表直接输出排位，但是问题是原数列中的数可能会有重复的，那么在哈希的时候如果有重复的数，那么后来再次出现的数就会顶替掉原来的数的排位，故错误。
+>
+> 正确思路：为了==保证原数列中每个数的唯一性==，我们可以给原数列每一个数赋一个下标，排序后以下标进行唯一的一一对应的索引。那么就是：首先赋下标，接着以第一关键词进行排序，然后最大的数（其实是下标）匹配最小的结果以此类推
+>
+> 模拟一个样例：
+> 5
+> 8 7 4 5 5 9
+>
+> 最终的答案应该是
+> 2 3 6 4 5 1
+>
+> 首先对每一个数赋予一个下标作为为唯一性索引
+> 8 7 4 5 5 9
+> 1 2 3 4 5 6（替身）
+>
+> 接着将上述数列按照第一关键词进行排序
+> 9 8 7 5 5 4
+> 6 1 2 4 5 3（替身）
+>
+> 对每一个数进行赋值匹配
+> 9 8 7 5 5 4
+> 6 1 2 4 5 3（替身）
+> 1 2 3 4 5 6（想要输出的结果）
+>
+> 按照替身进行排序
+> 8 7 4 5 5 9
+> 1 2 3 4 5 6（替身）（排序后）
+> 2 3 6 4 5 1（想要输出的结果）
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve()
+{
+	int n; cin >> n;
+	
+    // 第一关键词是原数列，第二关键词是赋予的唯一下标
+	vector<pair<int, int>> a(n + 1);
+	for (int i = 1; i <= n; i ++)
+	{
+		cin >> a[i].first;
+		a[i].second = i;
+	}
+	
+    // 按照第一关键词排序
+	sort(a.begin() + 1, a.end(), [&](pair<int, int> x, pair<int, int> y) {
+		return x.first > y.first;
+	});
+	
+    // 以下标作为原数列的替身，每一个替身对应一个升序的最终排名
+	vector<pair<int, int>> res(n + 1);
+	for (int i = 1; i <= n; i ++)
+	{
+		res[i].first = a[i].second;
+		res[i].second = i;
+	}
+	
+    // 通过下标，还原原数列的排序
+	sort(res.begin() + 1, res.end());
+	
+    // 输出第二关键词
+	for (int i = 1; i <= n; i ++)
+		cout << res[i].second << " \n"[i == n];
+}
+
+int main()
+{
+	int T; cin >> T;
+	while (T --) solve();
+	return 0;
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

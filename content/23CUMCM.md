@@ -41,10 +41,13 @@ $$
 #### 2.1.2 阴影遮挡效率 $\eta_{\cos}$ 计算公式
 
 $$
-% 数据输入格式
+% 数据输入格式 ：两个定日镜的坐标、高度、太阳方位角、定日镜法向量
 \text{Input:}x_1,y_1,h_1,x_2,y_2,h_2,\gamma_s,\overrightarrow{n} \\
 
+% 定日镜俯仰角 
 \cos \alpha = \overrightarrow{n} \cdot (0,0,1)\\
+
+% 投影点 A、B
 A(x_1+\frac L 2 \cos \alpha \cos(\pi - \gamma_s) + \frac K 2 \sin(\pi - \gamma_s),
 y_1+\frac L 2 \cos \alpha\sin(\pi - \gamma_s) - \frac K 2 \cos(\pi - \gamma_s),
 h_1+\frac L 2 \sin \alpha )\\
@@ -53,8 +56,7 @@ B(x_1+\frac L 2 \cos \alpha\cos(\pi - \gamma_s) - \frac K 2 \sin(\gamma_s - \pi)
 y_1+\frac L 2 \cos \alpha \sin(\pi - \gamma_s) + \frac K 2 \cos(\pi - \gamma_s),
 h_1+\frac L 2 \sin \alpha )\\
 
-\textbf{假设：}\text{相邻定日镜法向量平行，镜面平行，即，}n_{1}=n_2=n\\ 
-
+% 投影点所在光线
 \text{第一条光线：}\frac{x-x_A}{\frac{-x_1}{\sqrt{x_1^2+y_1^2+(80-h_1)^2}}} = \frac{y-y_A}{\frac{-y_1}{\sqrt{x_1^2+y_1^2+(80-h_1)^2}}} = \frac{z-76}{\frac{z_A}{\sqrt{x_1^2+y_1^2+(80-h_1)^2}}} = t_1 (1)\\
 
 \text{第二条光线：}\frac{x-x_B}{\frac{-x_1}{\sqrt{x_1^2+y_1^2+(80-h_1)^2}}} = \frac{y-y_B}{\frac{-y_1}{\sqrt{x_1^2+y_1^2+(80-h_1)^2}}} = \frac{z-76}{\frac{z_A}{\sqrt{x_1^2+y_1^2+(80-h_1)^2}}} = t_2 (2)\\
@@ -112,8 +114,8 @@ z = z_F'\\
 
 
 
-\text{判断:}x_E,x_F\text{是否在}x_E',x_F'\text{范围内,若在内部，则记录两点元祖}(x,x'),append到mark列表中\\
-\text{根据记录的边角点,设计算法,求解遮挡面积,} \eta_{sb} = 1-\frac {\text{遮挡面积}}{K \times L}\\
+\text{判断:}x_E,x_F\text{是否在}x_E',x_F'\text{范围内,若在内部,根据记录的边角点,设计算法,求解遮挡面积,} \\
+\text{最终计算可得参数：}\eta_{sb} = 1-\frac {\text{遮挡面积}}{K \times L}\\
 $$
 
 ## 三、知识积累
