@@ -141,40 +141,7 @@ int main()
 }
 ```
 
-### 3. Short Sort
-
-https://codeforces.com/contest/1873/problem/A
-
-> 题意：对于一个由三个字符（就是abc三个字符的随机排列）组成的字符串，能否通过一次或零次交换两个字符使得字符串变为abc
->
-> 思路：统计三个位置的字符是否分别为abc，如果不是，计数器加一，如果计数器小于等于2，就可以恢复，否则就不可以
-
-```c++
-#include <bits/stdc++.h>
-using namespace std;
-
-void solve()
-{
-	string s;
-	cin >> s;
-	
-	int cnt = 0;
-	for (int i = 0; i < 3; i ++)
-		if (s[i] != 'a' + i)
-			cnt ++;
-	if (cnt <= 2) cout << "YES\n";
-	else cout << "NO\n"; 
-}
-
-int main()
-{
-	int T; cin >> T;
-	while (T --) solve();
-	return 0;
-}
-```
-
-### 4. Target Practice
+### 3. Target Practice
 
 https://codeforces.com/contest/1873/problem/C
 
@@ -486,7 +453,146 @@ int main()
 }
 ```
 
+### 3. 数量
 
+https://www.acwing.com/problem/content/5150/
+
+法一：dfs
+
+> 题意：给定一个数n，问[1, n]中有多少个数只含有4或7
+>
+> 思路：对于一个数，我们可以构造一个二叉搜数进行搜索，因为每一位只有两种可能，那么从最高位开始搜索。如果当前数超过了n就return，否则就算一个答案
+>
+> 时间复杂度：
+> $$
+> O(2^{1 + \lg{(\max(a[i])})})
+> $$
+
+```c++
+#include <iostream>
+using namespace std;
+
+#define int long long
+
+int n, res;
+
+void dfs(int x) {
+    if (x > n) return;
+    
+    res ++;
+    
+    dfs(x * 10 + 4);
+    dfs(x * 10 + 7);
+}
+
+signed main() {
+    cin >> n;
+    dfs(4);
+    dfs(7);
+    cout << res << "\n";
+    return 0;
+}
+```
+
+法二：二进制枚举
+
+> 题意：给定一个数n，问[1, n]中有多少个数只含有4或7
+>
+> 思路：按照数位进行计算。对于一个x位的数，1到x-1位的情况下所有的数都符合条件，对于一个t位的数，满情况就是 $2^t$ 种，所以[1, x - 1]位就一共有 $2^1 + 2^2 + \cdots + 2^{x - 1} = 2^{x} - 2$ 种情况 。对于第x位，采取二进制枚举与原数进行比较，如果小于原数，则答案+1，反之结束循环输出答案即可
+```c++
+#include <iostream>
+using namespace std;
+
+int WS(int x) {
+	int res = 0;
+	while (x) {
+		res++;
+		x /= 10;
+	}
+	return res;
+}
+
+int calc(int a[], int ws) {
+	int res = 0;
+	for (int i = ws - 1; i >= 0; i --) {
+		res = res * 10 + a[i];
+	}
+	return res;
+}
+
+int main() {
+	int n;
+	cin >> n;
+	
+	int ws = WS(n);
+	
+	int ans = (1 << ws) - 2;
+	
+	int a[20] {};
+	for (int i = 0; i < (1 << ws); i ++) {
+		for (int j = 0; j < ws; j ++) {
+			if ((1 << j) & i) {
+				a[j] = 7;
+			} else {
+				a[j] = 4;
+			}
+		}
+		if (calc(a, ws) <= n) {
+			ans ++;
+		} else {
+			break;
+		}
+	}
+	
+	cout << ans;
+	
+	return 0;
+}
+```
+
+### 4. 组合总和
+
+https://leetcode.cn/problems/combination-sum/
+
+> 题意：给定一个序列，其中的元素没有重复，问如何选取其中的元素，使得选出的数字总和为指定的数字target，选取的数字可以重复
+>
+> 思路：思路比较简答，很容易想到用dfs搜索出所有的组合情况，即对于每一个“结点”，我们直接遍历序列中的元素即可。但是由于题目的限制，即不允许合法的序列经过排序后相等。那么为了解决这个约束，我们可以将最终搜索到的序列排序后进行去重，但是这样的时间复杂度会很高，于是我们从搜索的过程切入。观看这一篇题解[防止出现重复序列的启蒙题解](https://leetcode.cn/problems/combination-sum/solutions/2363929/39-zu-he-zong-he-hui-su-qing-xi-tu-jie-b-9zx7/)，我们提取其中最关键的一个图解
+>
+> ![subset_sum_i_pruning.png](https://pic.leetcode.cn/1690625058-WYmZtD-subset_sum_i_pruning.png)
+>
+> 可见3，4和4，3的剩余选项（其中可能包含了答案序列）全部重复，因此我们直接减去这个枝即可。不难发现，我们根据上述优化思想，剪枝的操作可以为：让当前序列开始枚举的下标 `idx` 从上一层开始的下标 `i` 开始，于是剪枝就可以实现了。
+>
+> 时间复杂度：??? 
+> $$
+> O \left ( 2^{\frac{n}{\log n}}\right)
+> $$
+
+```c++
+class Solution {
+public:
+    // 答案数组res，目标数组c，目标总和target，答案数组now，当前总和sum，起始下标idx
+    void dfs(vector<vector<int>>& res, vector<int>& c, int target, vector<int>& now, int sum, int idx) {
+        if (sum > target) {
+            return;
+        } else if (sum == target) {
+            res.emplace_back(now);
+            return;
+        }
+        for (int i = idx; i < c.size(); i++) {
+            now.emplace_back(c[i]);
+            dfs(res, c, target, now, sum + c[i], i);
+            now.pop_back();
+        }
+    }
+
+    vector<vector<int>> combinationSum(vector<int>& candidates, int target) {
+        vector<vector<int>> res;
+        vector<int> now;
+        dfs(res, candidates, target, now, 0, 0);
+        return res;
+    }
+};
+```
 
 ## DP
 
@@ -590,6 +696,19 @@ int main()
 	return 0;
 }
 ```
+
+### 2. 最小化网络并发线程分配
+
+https://vijos.org/d/nnu_contest/p/1492
+
+> 题意：现在有一个线性网络需要分配并发线程，每一个网络有一个权重，现在有一个线程分配规则。对于当前网络，如果权重比相邻的网络大，则线程就必须比相邻的网络大。
+>
+> 思路：我们从答案角度来看，对于一个网络，我们想知道它的相邻的左边线程数和右边线程数，如果当前网络比左边和右边的权重都大，则就是左右线程数的最大值+1，当然这些的前提是左右线程数已经是最优的状态，因此我们要先求“左右线程”。分析可知，左线程只取决于左边的权重与线程数，右线程同样只取决于右边的权重和线程数，因此我们可以双向扫描一遍即可求得“左右线程”。最后根据“左右线程”即可求得每一个点的最优状态。
+
+```c++
+```
+
+
 
 ## 博弈论
 
@@ -869,17 +988,285 @@ int main()
 }
 ```
 
+## 思维题
 
+### 1. 最长严格递增子序列
 
+https://www.acwing.com/problem/content/5273/
 
+> 题意：给定长度为n的序列，问将这个序列拼接n次后，最长严格递增子序列的长度为多少？
+>
+> 思路：其实最终的思路很简单，讲题目转化为在每个序列中选一个数，一共可以选出多少个不同的数。但是在产生这样的想法之前，先讲一下我的思考过程。我将序列脑补出一幅散点折线图，然后将这些点投影到y轴上，最终投影点的个数就是答案的数量，但是投影会有重合，因此答案最多就是n个数，最少1个数，从而想到就是在n个序列中选数，选的数依次增大即可，相信的就是一个求序列不重复数的个数的过程。去重即可。
+>
+> 注意点：由于C++的STL的unique函数的前提是一个有序的序列，因此在unique之前需要将序列进行排序。
+>
+> 时间复杂度：$O(n)$
 
+```c++
+#include <bits/stdc++.h>
+using namespace std;
 
+int main()
+{
 
+    int T;
+    cin >> T;
 
+    while (T--)
+    {
+        int n;
+        cin >> n;
 
+        vector<int> a;
+        for (int i = 0; i < n; i++)
+        {
+            int x;
+            cin >> x;
+            a.emplace_back(x);
+        }
 
+        // 去重老套路，string也可以用
+        sort(a.begin(), a.end());
+        a.erase(unique(a.begin(), a.end()), a.end());
 
+        cout << a.size() << endl;
+    }
 
+    return 0;
+}
+```
+
+### 2. 三元组
+
+https://www.acwing.com/problem/content/5280/
+
+> 题意：在一个序列中如何选择一个三元组，使得三个数之积最小，给出情况数
+>
+> 思路：首先很容易得知，这三个数一定是序列排序后的前三个数，那么就是对这三个数可能的情况进行讨论
+>
+> - 情况1：**前三个数都相等 **`（2 2 2 2 2 4 5）`，则就是在所有的 `a[0]` 中选3个，情况数就是 $C_{cnt\_a[0]}^{3}$
+> - 情况2：**前三个数中有两个数相等**，由于数组经过了排序，因此情况2分为两种情况
+>     - 前两个数相等 `（1 1 3 3 3 5）`，则就是在所有的 `a[2]` 中选1个，情况数就是 $C_{cnt\_a[2]}^{1}$
+>     - 后两个数相等 `（1 2 2 2 4 6）`，则就是在所有的 `a[1]` 中选2个，情况数就是 $C_{cnt\_a[1]}^{2}$
+> - 情况3：**前三个数中全都不相等** `（1 2 4 4 4 5 7）`，这就是在所有的 `a[2]` 中选1个，情况数就是 $C_{cnt\_a[2]}^{1}$
+>
+> 可以发现上述情况2的第一种和情况3的答案相等，故分为三种情况即可。
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+// 计算组合数 C_{a}^{b}
+ll calc(ll a, ll b) {
+    ll fz = 1, fm = 1;
+    for (int i = 0, num = a; i < b; i++, num--) {
+        fz *= num;
+    }
+    for (int i = 1; i <= b; i++) {
+        fm *= i;
+    }
+    return fz / fm;
+}
+
+int main() {
+    int n; cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    sort(a.begin(), a.begin() + n);
+    
+    ll res = 0;
+    
+    if (a[0] == a[1] && a[1] == a[2]) {
+        // 情况1：前三个数都相等（2 2 2 2 2 4 5），则就是在所有的a[0]中选3个
+        ll cnt = count(a.begin(), a.begin() + n, a[0]);
+        res = calc(cnt, 3);
+    } else if (a[0] == a[1] || (a[0] != a[1] && a[1] != a[2])) {
+        // 情况2：前两个数相等（1 1 3 3 3 4 5） or 三个数都不相等（1 2 4 4 4 5 7），则就是在所有的a[2]中选2个
+        res = count(a.begin(), a.begin() + n, a[2]);
+    } else {
+        // 情况3：后两个数相等（1 2 2 2 4 6），则就是在所有的a[1]中选2个
+        ll cnt = count(a.begin(), a.begin() + n, a[1]);
+        res = calc(cnt, 2);
+    }
+    
+    cout << res << "\n";
+    
+    return 0;
+}
+```
+
+### 3. 删除元素
+
+https://www.acwing.com/problem/content/5281/
+
+> 题意：给定一个排列为1~n，定义一个数“有价值”为当前数的前面没有数比当前的数大。现在需要删除一个数，使得序列中增加尽可能多的“有价值”的数，如果这个数有多个，则删除最小的那个数
+>
+> ==最开始想到的思路==：枚举每一个数，如果删除，则序列中会增加多少个“有价值”的数，算法设计如下：
+>
+> 1. 首先判断每一个数是否是有价值的数
+>     - 创建一个变量来记录当前数的前面序列的最大值
+>     - 比较判断当前数和前方最大值的关系，如果小于，则无价值，反之有价值
+> 2. 接着枚举每一个数，如果删除该数，则序列会损失多少个有价值的数
+>     - 首先判断自己是不是有价值的数，如果是，则当前损失值 -1
+>     - 接着判断删除当前数对后续的影响 :star: ：我们在枚举后续数的时候，起始的newd（前驱除掉a[i]的最大值）应该就是当前的d，只不过需要使用新变量newd而非d是因为这一步与整体无关，不可以改变整体的d。否则会出现错误，比如对于`4 3 5 1 2`，如果我们在枚举后续数的时候直接对d进行迭代，那么在第一轮d就会被更新为5，就再也无法更新了
+> 3. 最终根据维护的损失值数组cnt即可求解
+> 4. 时间复杂度 $O(n^2)$
+>
+> ---
+>
+> ==优化的思路==：
+>
+> 1. 同样是枚举每一个数，如果当前数字是有价值的数，那么cnt[a[i]]就 -1
+>
+>     - 取决于当前数字前面是否有比它大的数，如果没有，那么就是有价值的
+>
+> 2. 接下来我们不需要遍历j=i+1到j=n-1，而是讨论当前数a[i]不是有价值数时的所有情况。现在我们想要维护cnt数组。不难发现，对于某个位置上的数a[k]，能否成为有价值的数只取决于前排序列是否有比他大的数以及大的数的个数。那么理论上我们在枚举a[i]的时候维护cnt[1~i-1]就可以确保cnt数组的正确性了。
+>
+>     - 假设a[k]的前排有一个比它大的数d：那么把d去掉之后，a[k]就会从无价值变为有价值
+>     - 假设a[k]的前排有至少两个比它大的数d1,d2,...dj...：那么不管去掉哪一个 $d_j$，我们都没法让a[k]变得有价值
+>
+>     如此一来，cnt数组就可以正确维护了
+>
+> 3. 最终根据维护的损失值数组cnt即可求解
+>
+> 4. 时间复杂度 $O(n)$
+
+暴力：
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+	int n;
+	cin >> n;
+	
+	vector<int> a(n);
+	for (int i = 0; i < n; i++) {
+		cin >> a[i];
+	}
+	
+	// 判断每个数是否是有价值的数
+	int d = 0; // 前方序列中的最大值
+	vector<bool> is_val(n + 1);
+	for (int i = 0; i < n; i++) {
+		if (a[i] > d) {
+			is_val[a[i]] = true;
+			d = a[i];
+		}
+	}
+	
+	// 枚举每一个数，计算删除该数之后会增加的有价值的数的个数 
+	d = 0; // 同上
+	vector<int> cnt(n + 1); // cnt[x]表示删除数x之后可以增加的有价值的数的个数
+	for (int i = 0; i < n; i++) {
+		if (is_val[a[i]]) {
+			cnt[a[i]]--;
+		}
+		
+		int newd = d; // 去掉a[i]后的前方序列的最大值 newd
+		for (int j = i + 1; j < n; j++) {
+			if (is_val[a[j]]) {
+				if (a[j] < newd) {
+					cnt[a[i]]--;
+				}
+			} else {
+				if (a[j] > newd) {
+					cnt[a[i]]++;
+				}
+			}
+			if (a[j] > newd) {
+			    newd = a[j];
+			}
+		}
+		
+		// 更新前方序列的最大值 d
+		if (a[i] > d) {
+			d = a[i];
+		}
+	}
+
+	// 找出可以增加的有价值的数的最大个数 ma
+	int ma = -n - 1;
+	for (int i = 0; i < n; i++) {
+		if (cnt[a[i]] > ma) {
+			ma = max(ma, cnt[a[i]]);
+		}
+	}
+
+	// 答案是满足个数的最小的数字
+	int res = 0;
+	for (int i = 1; i <= n; i++) {
+		if (cnt[i] == ma) {
+			res = i;
+			break;
+		}
+	}
+	
+	cout << res << "\n";
+	
+	return 0;
+}
+```
+
+优化：
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n; 
+    cin >> n;
+    
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+     
+    vector<int> cnt(n + 1);     // cnt[x]表示删除数x之后可以增加的有价值的数的个数
+    int d1 = 0, d2 = 0;         // d1: 最大值, d2: 次大值
+    for (int i = 0; i < n; i++) {
+        if (a[i] > d1) {
+            // 前方序列 没有数比当前的数大
+            cnt[a[i]]--;
+        } else if (a[i] > d2) {
+            // 前方序列 只有一个数比当前大
+            cnt[d1]++;
+        }
+        
+        // 更新最大值d1和次大值d2
+        if (a[i] > d1) d2 = d1, d1 = a[i];
+        else if (a[i] > d2) d2 = a[i];
+    }
+    
+    // 找到可以增加的最大值
+    int ma = -1;
+    for (int i = 1; i <= n; i++) {
+        if (cnt[i] > ma) {
+            ma = cnt[i];
+        }
+    }
+    
+    // 取元素的最小值
+    int res = n + 1;
+    for (int i = 1; i <= n; i++) {
+        if (cnt[i] == ma) {
+            res = i;
+            break;
+        }
+    }
+    
+    cout << res << "\n";
+    
+    return 0;
+}
+```
 
 
 
