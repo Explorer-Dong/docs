@@ -237,6 +237,86 @@ int main()
 }
 ```
 
+### 2. 分组
+
+https://www.lanqiao.cn/problems/5129/learning/
+
+> 题意：给定一个序列，现在需要将这个数列分为k组，如何分组可以使得每一组的极差中，最大值最小
+>
+> 最开始想到的思路：
+>
+> 很容易联想到的一种方法其实就是高中组合数学中学到的“隔板法”，现在有n个数，需要分成k组，则方案数就是在n-1个空档中插入k-1个隔板，即 $C_{n-1}^{k-1}$ 种方案
+>
+> 时间复杂度 $O(n^2)$
+>
+> 优化思路：
+>
+> 上述思路是正向思维，即对于构思分组情况计算极差。我们不妨逆向思维，即枚举极差的情况，判断此时的分组情况。如果对于当前的极差lim，我们显然可以分成n组，即有一个最大分组值；我们也可以求一个最小分组值cnt，即如果再少分一组那么此时的极差就会超过当前约束的极差值lim。因此对于当前约束的极差值lim，我们可以求一个最小分组值cnt
+>
+> - 如果当前的最小分组值cnt > k，那么 $\left [ cnt,n \right ]$ 就无法包含k，也就是说当前约束的极差lim不符合条件，lim偏小
+> - 如果当前的最小分组值cnt <= k，那么 $\left [ cnt,n \right ]$ 就一定包含k，且当前分组的最小极差一定是 <= 约束的极差值lim，lim偏大
+>
+> 于是二分极差的思路就跃然纸上了。我们二分极差，然后根据可以分组的最小数量cnt判断二分的结果进行左右约束调整即可。
+>
+> 时间复杂度 $O(n \log n)$
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+
+
+bool check(int lim, vector<int>& a, int n, int k) {
+    int cnt = 1; // 当前可以分的最小组数
+    int pre = a[0];
+    for (int i = 0; i < n; i++) {
+        if (a[i] - pre > lim) {
+            pre = a[i];
+            cnt++;
+        }
+    }
+    return cnt <= k;
+}
+
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    sort(a.begin(), a.begin() + n);
+
+    int l = 0, r = a[n - 1] - a[0];
+    while (l < r) {
+        int mid = (l + r) >> 1;
+        if (check(mid, a, n, k)) {
+            // 分的最小组数 <= k，则当前极差大了
+            r = mid;
+        } else {
+            // 分的最小组数 >  k，则当前极差小了
+            l = mid + 1;
+        }
+    }
+
+    cout << r << "\n";
+}
+
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0), cout.tie(0);
+    int T = 1;
+    // cin >> T;
+    while (T--) {
+        solve();
+    }    
+    return 0;
+}
+```
+
 ## 哈希表
 
 ### 1. 分组
@@ -247,6 +327,7 @@ https://www.acwing.com/problem/content/5182/
 > 存储所有的组队信息：存入哈希表，数据类型为“键:字符串”“值:一对字符串”
 > 想要知道最终的分组情况，只需要查询数组中的队员情况与想同组 or 不想同组的成员名字是否一致即可
 > 时间复杂度 $O(n)$，空间复杂度 $O(n\ len(name))_{max}$
+
 ```cpp
 #include <iostream>
 #include <vector>
@@ -363,9 +444,9 @@ https://www.acwing.com/problem/content/5168/
 >
 > 转弯判断逻辑：
 >
->   1. 首先不能是起点开始的
->   2. 对于正十字：如果next的行&列都与pre的行和列不相等，就算转弯
->   3. 对于斜十字：如果next的行|列有和pre相等的，就算转弯
+>     1. 首先不能是起点开始的
+>     2. 对于正十字：如果next的行&列都与pre的行和列不相等，就算转弯
+>     3. 对于斜十字：如果next的行|列有和pre相等的，就算转弯
 
 ```cpp
 #include <iostream>
@@ -499,6 +580,7 @@ signed main() {
 > 题意：给定一个数n，问[1, n]中有多少个数只含有4或7
 >
 > 思路：按照数位进行计算。对于一个x位的数，1到x-1位的情况下所有的数都符合条件，对于一个t位的数，满情况就是 $2^t$ 种，所以[1, x - 1]位就一共有 $2^1 + 2^2 + \cdots + 2^{x - 1} = 2^{x} - 2$ 种情况 。对于第x位，采取二进制枚举与原数进行比较，如果小于原数，则答案+1，反之结束循环输出答案即可
+
 ```c++
 #include <iostream>
 using namespace std;
@@ -592,6 +674,256 @@ public:
         return res;
     }
 };
+```
+
+### 5. 扩展字符串
+
+https://www.acwing.com/problem/content/5284/
+
+> 题意：给定一种字符串的构造方式，问构造n次以后的字符串中的第k个字符是什么
+>
+> 思路：由于构造的方法是基于上一种情况的，很容易可以想到一个递归搜索树来解决。只是这道题有好几个坑，故记录一下。
+>
+> - 首先说一下搜索的思路：对于当前的状态，我们想要知道第k个位置上的字符，很显然我们可以通过预处理每一种构造状态下的字符串长度得到下一个字符串的长度，于是我们可以在当前的字符串中，通过比对下标与**五段**字符串长度的大小，来确定是继续递归还是直接输出
+> - 特判：可以发现，对于 $n=0$ 的情况，我们无法采用相同的结构进行计算，故进行特判，如果当前来到了最初始的字符串状态，我们直接输出相应位置上的字符即可
+> - 最后说一下递归终点的设计：与搜索所有的答案情况不同，这道题的答案是唯一的，因此我们在搜索到答案后，可以通过一个 `bool` 变量作为一个标记，表示已经找到答案了，只需要不断回溯直到回溯结束为止，就不需要再遍历其他的分支了
+> - **坑：**这道题的坑说实话有点难崩。
+>     1. 首先是一个k的大小，是一定要开 `long long` 的，我一开始直接全局宏定义 `int` 为 `long long` 了
+>     2. 还有一个坑可能是只要我才会犯的，就是字符串按照下标输出字符的时候，是需要 `-1` 的，闹心的是我有的加了，有的没加，还是debug的时候调出来的
+>     3. 最后一个大坑，属于是引以为戒了。就是这句 `len[i] = min(len[i], (int)2e18)`，因为我们~~可以发现~~，抛开那三个固定长度的字符串来说，每一次新构造出来的字符串长度都是上一个字符串长度 $2$ 倍，那么构造 $n$ 次后的字符串长度就是 $s_0$ 长度的 $2^n$ 倍，那么对于 $n$ 的取值范围来说，直接存储长度肯定是不可取的。那么如何解决这个问题呢？方法是我们对 `len[i]` 进行一个约束即可，见代码。最后进行递归比较长度就没问题了。
+> - 时间复杂度：$O(n)$ - 由于每一个构造的状态我们都是常数级别的比较，因此相当于一个状态的搜索时间复杂度为 $O(1)$，那么总合就是 $O(n)$
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+
+int n, k;
+string s = "DKER EPH VOS GOLNJ ER RKH HNG OI RKH UOPMGB CPH VOS FSQVB DLMM VOS QETH SQB";
+string t1 = "DKER EPH VOS GOLNJ UKLMH QHNGLNJ A";
+string t2 = "AB CPH VOS FSQVB DLMM VOS QHNG A";
+string t3 = "AB";
+
+// 记录每一层构造出来的字符串 Si 的长度 len，当前递归的层数 i (i>=1)，对于当前层数需要查询的字符的下标 pos
+void dfs(vector<int>& len, int i, int pos, bool& ok) {
+	// 已经搜到答案了就不断返回
+	if (ok) {
+		return;
+	}
+
+	// 如果还没有搜到答案，并且已经递归到了最开始的一层，就输出原始字符串相应位置的字符即可
+	if (!i) {
+		cout << s[pos - 1];
+		return;
+	}
+
+	int l1 = t1.size(), l2 = l1 + len[i - 1], l3 = l2 + t2.size(), l4 = l3 + len[i - 1];
+	if (pos <= l1) {
+		cout << t1[pos - 1];
+		ok = true;
+		return;
+	} else if (pos <= l2) {
+		dfs(len, i - 1, pos - l1, ok);
+	} else if (pos <= l3) {
+		cout << t2[pos - l2 - 1];
+		ok = true;
+		return;
+	} else if (pos <= l4) {
+		dfs(len, i - 1, pos - l3, ok);
+	} else {
+		cout << t3[pos - l4 - 1];
+		ok = true;
+		return;
+	}
+}
+
+void solve() {
+	cin >> n >> k;
+
+	vector<int> len(n + 10);
+	len[0] = s.size();
+
+	for (int i = 1; i <= n; i++) {
+		len[i] = 2 * len[i - 1] + t1.size() + t2.size() + t3.size();
+		len[i] = min(len[i], (int)2e18); // 点睛之笔...
+	}
+
+	// 特判下标越界的情况
+	if (k > len[n]) {
+		cout << ".";
+		return;
+	}
+
+	// 否则开始从第n层开始递归搜索
+	bool ok = false;
+	dfs(len, n, k, ok);
+}
+
+signed main() {
+	int T = 1;
+	cin >> T;
+	while (T--) {
+		solve();
+	}
+	return 0;
+}
+```
+
+### 6. 让我们异或吧
+
+https://www.luogu.com.cn/problem/P2420
+
+> 题意：给定一棵树，树上每一条边都有一个权值，现在有Q次询问，对于每次询问会给出两个结点编号u，v，需要输出结点u到结点v所经过的路径的所有边权的异或之和
+>
+> 思路：对于每次询问，我们当然可以遍历从根到两个结点的所有边权，然后全部异或计算结果，但是时间复杂度是 $O(n)$，显然不行，那么有什么优化策略吗？答案是有的。我们可以发现，对于两个结点之间的所有边权，其实就是根到两个结点的边权相异或得到的结果（异或的性质），我们只需要预处理出根结点到所有结点的边权已异或值，后续询问的时候直接 $O(1)$ 计算即可
+>
+> 时间复杂度：$O(n+q)$
+
+```c++
+const int N = 100010;
+
+struct node {
+	int id;
+	int w;
+};
+
+int n, m, f[N];		// f[i] 表示从根结点到 i 号结点的所有边权的异或值
+vector<node> G[N];
+bool vis[N];
+
+void dfs(int fa) {
+	if (!vis[fa]) {
+		vis[fa] = true;
+		for (auto& ch: G[fa]) {
+			f[ch.id] = f[fa] ^ ch.w;
+			dfs(ch.id);
+		}
+	}
+}
+
+void solve() {
+	cin >> n;
+
+	for (int i = 0; i < n - 1; i++) {
+		int a, b, w;
+		cin >> a >> b >> w;
+		G[a].push_back({b, w});
+		G[b].push_back({a, w});
+	}
+
+	dfs(1);
+
+	cin >> m;
+
+	while (m--) {
+		int u, v;
+		cin >> u >> v;
+		cout << (f[u] ^ f[v]) << "\n";
+	}
+}
+```
+
+### 7. Function
+
+https://www.luogu.com.cn/problem/P1464
+
+> 题意：
+>
+> 思路一：直接dfs
+>
+> - 直接按照题意进行dfs代码的编写，但是很显然时间复杂极高
+> - 时间复杂度：$O(T \times 情况数)$
+>
+> 思路二：记忆化dfs
+>
+> - 记忆化逻辑：
+>     - 如果当前的状态没有记忆过，就记忆一下
+>     - 如果当前的状态已经记忆过了，就不需要继续递归搜索了，直接使用之前已经记忆过的答案即可
+> - 上述起始状态需要和搜到答案的状态做一个区别。我们知道，对于一组合法的输入，答案一定是
+> - 注意点：
+>     - 输入终止条件不是 `a != -1 && b != -1 && c != -1`，而是要三者都不是 `-1` 才行
+>     - 对于每一组输入，我们不需要 `memset` 记忆数组，因为每一组的记忆依赖是相同的
+>     - 由于答案一定是 $>0$ 的，因此是否记忆过只需要看当前状态的答案是否 $>0$ 即可
+> - 时间复杂度：$<O(T \times n^3)$
+
+直接dfs代码：
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+ll dfs(int a, int b, int c) {
+	if (a <= 0 || b <= 0 || c <= 0) return 1;
+	else if (a > 20 || b > 20 || c > 20) return dfs(20, 20, 20);
+	else if (a < b && b < c) return dfs(a, b, c - 1) + dfs(a, b - 1, c - 1) - dfs(a, b - 1, c);
+	else return dfs(a - 1, b, c) + dfs(a - 1, b - 1, c) + dfs(a - 1, b, c - 1) - dfs(a - 1, b - 1, c - 1);
+}
+
+void solve() {
+	int a, b, c;
+	cin >> a >> b >> c;
+	while (a != -1 && b != -1 && c != -1) {
+		printf("w(%d, %d, %d) = %lld\n", a, b, c, dfs(a, b, c));
+		cin >> a >> b >> c;
+	}
+}
+
+signed main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr), cout.tie(nullptr);
+	int T = 1;
+//	cin >> T;
+	while (T--) solve();
+	return 0;
+}
+```
+
+记忆化dfs代码：
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int N = 25;
+
+ll f[N][N][N];
+
+ll dfs(ll a, ll b, ll c) {
+	// 上下界
+	if (a <= 0 || b <= 0 || c <= 0) return 1;
+	else if (a > 20 || b > 20 || c > 20) return dfs(20, 20, 20);
+
+	if (f[a][b][c]) {
+		// 已经记忆化过了，直接返回当前状态的解
+		return f[a][b][c];
+	}
+	else {
+		// 没有记忆化过，就递归计算并且记忆化
+		if (a < b && b < c) return f[a][b][c] = dfs(a, b, c - 1) + dfs(a, b - 1, c - 1) - dfs(a, b - 1, c);
+		else return f[a][b][c] = dfs(a - 1, b, c) + dfs(a - 1, b - 1, c) + dfs(a - 1, b, c - 1) - dfs(a - 1, b - 1, c - 1);
+	}
+}
+
+void solve() {
+	ll a, b, c;
+	cin >> a >> b >> c;
+	while (!(a == -1 && b == -1 && c == -1)) {
+		printf("w(%lld, %lld, %lld) = %lld\n", a, b, c, dfs(a, b, c));
+		cin >> a >> b >> c;
+	}
+}
+
+signed main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr), cout.tie(nullptr);
+	int T = 1;
+//	cin >> T;
+	while (T--) solve();
+	return 0;
+}
 ```
 
 ## DP
@@ -703,12 +1035,587 @@ https://vijos.org/d/nnu_contest/p/1492
 
 > 题意：现在有一个线性网络需要分配并发线程，每一个网络有一个权重，现在有一个线程分配规则。对于当前网络，如果权重比相邻的网络大，则线程就必须比相邻的网络大。
 >
-> 思路：我们从答案角度来看，对于一个网络，我们想知道它的相邻的左边线程数和右边线程数，如果当前网络比左边和右边的权重都大，则就是左右线程数的最大值+1，当然这些的前提是左右线程数已经是最优的状态，因此我们要先求“左右线程”。分析可知，左线程只取决于左边的权重与线程数，右线程同样只取决于右边的权重和线程数，因此我们可以双向扫描一遍即可求得“左右线程”。最后根据“左右线程”即可求得每一个点的最优状态。
+> 思路：我们从答案角度来看，对于一个网络，我们想知道它的相邻的左边线程数和右边线程数，如果当前网络比左边和右边的权重都大，则就是左右线程数的最大值+1，当然这些的==前提是左右线程数已经是最优的状态==，因此我们要先求“左右线程”。分析可知，左线程只取决于左边的权重与线程数，右线程同样只取决于右边的权重和线程数，因此我们可以双向扫描一遍即可求得“左右线程”。最后根据“左右线程”即可求得每一个点的最优状态。
 
 ```c++
+void solve() {
+	int n; cin >> n;
+	vector<int> w(n + 1), l(n + 1, 1), r(n + 1, 1);
+	for (int i = 1; i <= n; i++) {
+		cin >> w[i];
+	}
+	for (int i = 2, j = n - 1; i <= n && j >= 1; i++, j--) {
+		if (w[i] > w[i - 1]) {
+			l[i] = l[i - 1] + 1;
+		}
+		if (w[j] > w[j + 1]) {
+			r[j] = r[j + 1] + 1;
+		}
+	}
+	int res = 0;
+	for (int i = 1; i <= n; i++) {
+		res += max(l[i], r[i]);
+	}
+	cout << res << "\n";
+}
 ```
 
+### 3. 摘花生
 
+https://www.acwing.com/problem/content/1017/
+
+> 题意：给定一个二维矩阵，每一个位置有一个价值，问：从左上角（1,1）走到右下角（r,c）能获得的最大价值是多少
+>
+> 思路：我们不妨从结果位置出发，对于（r,c）这个位置而言，能走到这里的只有两个位置，即上面的位置（r-1,c）和左边（r,c-1）的位置，那么答案就是（r-1,c）和（r,c-1）中的最大价值 +（r,c）处的价值。那么对于（r-1,c）和（r,c-1）中的最大价值，同样==需要其相应位置的左方和上方的价值最优计算而来==，因此就很容易想到动态规划的思路。我们需要初始化`dp[1][j]`和`dp[i][1]`的答案，然后从`dp[2][2]`开始计算。
+>
+> 代码优化：不难发现，直接从`dp[1][1]`开始迭代也是可以的。因为`dp[0][j]`均为0，同样的`dp[1][0]`也均为0。
+
+优化前代码：
+
+```c++
+void solve() {
+	int r, c;
+	cin >> r >> c;
+	vector<vector<int>> w(r + 1, vector<int>(c + 1)), dp(r + 1, vector<int>(c + 1, 0));
+
+	for (int i = 1; i <= r; i++) {
+		for (int j = 1; j <= c; j++) {
+			cin >> w[i][j];
+		}
+	}
+
+	dp[1][1] = w[1][1];
+
+	for (int j = 2; j <= c; j++) {
+		dp[1][j] = dp[1][j - 1] + w[1][j];
+	}
+
+	for (int i = 2; i <= r; i++) {
+		dp[i][1] = dp[i - 1][1] + w[i][1];
+	}
+
+	for (int i = 2; i <= r; i++) {
+		for (int j = 2; j <= c; j++) {
+			dp[i][j] = w[i][j] + max(dp[i - 1][j], dp[i][j - 1]);
+		}
+	}
+
+	cout << dp[r][c] << "\n";
+}
+```
+
+优化后代码：
+
+```c++
+void solve() {
+	int r, c;
+	cin >> r >> c;
+	vector<vector<int>> w(r + 1, vector<int>(c + 1)), dp(r + 1, vector<int>(c + 1, 0));
+
+	for (int i = 1; i <= r; i++) {
+		for (int j = 1; j <= c; j++) {
+			cin >> w[i][j];
+		}
+	}
+
+	for (int i = 1; i <= r; i++) {
+		for (int j = 1; j <= c; j++) {
+			dp[i][j] = w[i][j] + max(dp[i - 1][j], dp[i][j - 1]);
+		}
+	}
+
+	cout << dp[r][c] << "\n";
+}
+```
+
+### 4. 最大社交深度和
+
+https://vijos.org/d/nnu_contest/p/1534
+
+> 算法：换根dp | BFS
+>
+> 题意：给定一棵树，现在需要选择其中的一个结点为根节点，使得深度和最大。深度的定义是以每个结点到树根所经历的结点数
+>
+> 思路：
+>
+> - **暴力**：
+>
+>     - 显然可以直接遍历每一个结点，计算每个结点的深度和，然后取最大值即可
+>     - 时间复杂度：$O(n^2)$
+>
+> - **优化**：
+>
+>     先看图：
+>
+>     <img src="https://s2.loli.net/2023/11/05/wPA9eDqIjChMfkN.png" alt="image-20231105233631038" style="zoom:50%;" />
+>
+>     - 我们可以发现，对于当前的根结点 `fa`，我们选择其中的一个子结点 `ch`，将 `ch` 作为新的根结点（如右图）。那么对于当前的 `ch` 的深度和，我们可以借助 `fa` 的深度和进行求解。我们假设以 `ch` 为子树的结点总数为 `x`，那么这 `x` 个结点在换根之后，相对于 `ch` 的深度和，贡献了 `-x` 的深度；而对于 `fa` 的剩下来的 `n-x` 个结点，相对于 `ch` 的深度和，贡献了 `n-x` 的深度。于是 `ch` 的深度和就是 `fa的深度和` `-x+n-x`，即
+>         $$
+>         dep[ch] = dep[fa]-x+n-x = dep[fa]+n-2*x
+>         $$
+>         于是我们很快就能想到利用前后层的递推关系，$O(1)$ 的计算出所有子结点的深度和
+>
+>     - 代码实现：我们可以先计算出 `base` 的情况，即任选一个结点作为根结点，然后基于此进行迭代计算。在迭代计算的时候需要注意的点就是在一遍 `dfs` 计算某个结点的深度和 `dep[root]` 时，如果希望同时计算出每一个结点作为子树时，子树的结点数，显然需要分治计算一波。关于分治的计算我熟练度不够高，~~特此标注一下debug了3h的点~~：即在递归到最底层，进行回溯计算的时候，需要注意不能统计父结点的结点值（因为建的是双向图，所以一定会有从父结点回溯的情况），那么为了避开这个点，就需要在 $O(1)$ 的时间复杂度内获得当前结点的父结点的编号，从而进行特判，采用的方式就是增加递归参数 `fa`。
+>
+>         - 没有考虑从父结点回溯的情况的dfs代码
+>
+>             ```c++
+>             void dfs(int now, int depth) {
+>             	if (!st[now]) {
+>             		st[now] = true;
+>             		dep[root] += depth;
+>             		for (auto& ch: G[now]) {
+>             			dfs(ch, depth + 1);
+>             			cnt[now] += cnt[ch];
+>             		}
+>             	}
+>             }
+>             ```
+>
+>         - 考虑了从父结点回溯的情况的dfs代码
+>
+>             ```c++
+>             void dfs(int now, int fa, int depth) {
+>             	if (!st[now]) {
+>             		st[now] = true;
+>             		dep[root] += depth;
+>             		for (auto& ch: G[now]) {
+>             			dfs(ch, now, depth + 1);
+>             			if (ch != fa) {
+>             				cnt[now] += cnt[ch];
+>             			}
+>             		}
+>             	}
+>             }
+>             ```
+>
+>     - 时间复杂度：$O(2n)$
+
+暴力代码：
+
+```c++
+const int N = 500010;
+
+int n;
+vector<int> G[N];
+int st[N], dep[N];
+
+void dfs(int id, int now, int depth) {
+	if (!st[now]) {
+		st[now] = 1;
+		dep[id] += depth;
+		for (auto& node: G[now]) {
+			dfs(id, node, depth + 1);
+		}
+	}
+}
+
+void solve() {
+	cin >> n;
+	for (int i = 1; i <= n - 1; i++) {
+		int a, b;
+		cin >> a >> b;
+		G[a].push_back(b);
+		G[b].push_back(a);
+	}
+
+	int res = 0;
+
+	for (int i = 1; i <= n; i++) {
+		memset(st, 0, sizeof st);
+		dfs(i, i, 1);
+		res = max(res, dep[i]);
+	}
+
+	cout << res << "\n";
+}
+```
+
+优化代码：
+
+```c++
+const int N = 500010;
+
+int n, dep[N], root = 1;
+vector<int> G[N], cnt(N, 1);;
+bool st[N];
+
+// 当前结点编号 now，当前结点的父结点 fa，当前结点深度 depth
+void dfs(int now, int fa, int depth) {
+	if (!st[now]) {
+		st[now] = true;
+		dep[root] += depth;
+		for (auto& ch: G[now]) {
+			dfs(ch, now, depth + 1);
+			if (ch != fa) {
+				cnt[now] += cnt[ch];
+			}
+		}
+	}
+}
+
+void bfs() {
+	memset(st, 0, sizeof st);
+	queue<int> q;
+	q.push(root);
+	st[root] = true;
+
+	while (q.size()) {
+		int fa = q.front(); // 父结点编号 fa
+		q.pop();
+		for (auto& ch: G[fa]) {
+			if (!st[ch]) {
+				st[ch] = true;
+				dep[ch] = dep[fa] + n - 2 * cnt[ch];
+				q.push(ch);
+			}
+		}
+	}
+}
+
+void solve() {
+	cin >> n;
+	for (int i = 1; i <= n - 1; i++) {
+		int a, b;
+		cin >> a >> b;
+		G[a].push_back(b);
+		G[b].push_back(a);
+	}
+
+	dfs(root, -1, 1);
+	bfs();
+
+	cout << *max_element(dep, dep + n + 1) << "\n";
+}
+```
+
+### 5.  [NOIP2002 普及组] 过河卒
+
+https://www.luogu.com.cn/problem/P1002
+
+> 题意：给定一个矩阵，现在需要从左上角走到右下角，问一共有多少种走法？有一个特殊限制是，对于图中的9个点是无法通过的。
+>
+> 思路一：dfs
+>
+> - 我们可以采用深搜的方法。但是会超时，我们可以这样估算时间复杂度：对于每一个点，我们都需要计算当前点的右下角的矩阵中的每一个点，那么总运算次数就近似为阶乘级别。当然实际的时间复杂度不会这么大，但是这种做法 $n*m$ 一旦超过100就很容易tle
+>
+> - 时间复杂度：$O(nm!)$
+>
+> 思路二：dp
+>
+> - 我们可以考虑，对于当前的点，可以从哪些点走过来，很显然就是上面一个点和左边一个点，而对于走到当前这个点的路线就是走到上面的点和左边的点的路线之和，base状态就是 `dp[1][1] = 1`，即起点的路线数为1
+>
+> - 时间复杂度：$O(nm)$
+
+dfs代码
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int N = 30;
+
+int n, m, a, b;
+int res;
+bool notsafe[N][N];
+
+void init() {
+	int px[9] = {0, -1, -2, -2, -1, 1, 2, 2, 1};
+	int py[9] = {0, 2, 1, -1, -2, -2, -1, 1, 2};
+	for (int i = 0; i < 9; i++) {
+		int na = a + px[i], nb = b + py[i];
+		if (na < 0 || nb < 0) continue;
+		notsafe[na][nb] = true;
+	}
+}
+
+void dfs(int x, int y) {
+	if (x > n || y > m || notsafe[x][y]) {
+		return;
+	}
+
+	if (x == n && y == m) {
+		res++;
+		return;
+	}
+
+	dfs(x, y + 1);
+	dfs(x + 1, y);
+}
+
+void solve() {
+	cin >> n >> m >> a >> b;
+	init();
+	dfs(0, 0);
+	cout << res << "\n";
+}
+
+signed main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr), cout.tie(nullptr);
+	int T = 1;
+//	cin >> T;
+	while (T--) solve();
+	return 0;
+}
+```
+
+dp代码
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int N = 30;
+
+int n, m, a, b;
+bool notsafe[N][N];
+ll dp[N][N];
+
+void solve() {
+	cin >> n >> m >> a >> b;
+
+	// 初始化
+	++n, ++m, ++a, ++b;
+	int px[9] = {0, -1, -2, -2, -1, 1, 2, 2, 1};
+	int py[9] = {0, 2, 1, -1, -2, -2, -1, 1, 2};
+	for (int i = 0; i < 9; i++) {
+		int na = a + px[i], nb = b + py[i];
+		if (na < 0 || nb < 0) continue;
+		notsafe[na][nb] = true;
+	}
+
+	// dp求解
+	dp[1][1] = 1;
+	for (int i = 1; i <= n; i++) {
+		for (int j = 1; j <= m; j++) {
+			if (!notsafe[i - 1][j]) dp[i][j] += dp[i - 1][j];
+			if (!notsafe[i][j - 1]) dp[i][j] += dp[i][j - 1];
+		}
+	}
+
+	cout << dp[n][m] << "\n";
+}
+
+signed main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr), cout.tie(nullptr);
+	int T = 1;
+//	cin >> T;
+	while (T--) solve();
+	return 0;
+}
+```
+
+### 6. [NOIP2001 普及组] 数的计算
+
+https://www.luogu.com.cn/problem/P1028
+
+> 题意：给定一个数和一种构造方法，即对于当前的数，可以在其后面添加一个最大为当前一半大的数，以此类推构造成一个数列。问一共可以构造出多少个这种数列
+>
+> 思路一：dfs
+>
+> - 非常显然的一个搜索树，答案就是结点数
+> - 时间复杂度：$O(方案数)$
+>
+> 思路二：dp
+>
+> - 非常显然的一个dp，我们定义一个dp记忆数组。其中 `dp[i]` 表示数字 `i` 的构造方案总数，那么状态转移方程就是
+>     $$
+>     dp[i]=\sum_{j=1}^{\left\lfloor i/2 \right\rfloor}dp[j]+1
+>     $$
+>
+> - 时间复杂度：$O(n^2)$
+
+dfs代码
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int n, res;
+
+void dfs(int x) {
+	res++;
+	for (int i = x >> 1; i >= 1; i--) {
+		dfs(i);
+	}
+}
+
+void solve() {
+	cin >> n;
+	dfs(n);
+	cout << res << "\n";
+}
+
+signed main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr), cout.tie(nullptr);
+	int T = 1;
+//	cin >> T;
+	while (T--) solve();
+	return 0;
+}
+```
+
+dp代码
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int n;
+
+void solve() {
+	cin >> n;
+
+	vector<ll> dp(n + 1, 1);
+	for (int i = 2; i <= n; i++) {
+		for (int j = 1; j <= i >> 1; j++) {
+			dp[i] += dp[j];
+		}
+	}
+
+	cout << dp[n] << "\n";
+}
+
+signed main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr), cout.tie(nullptr);
+	int T = 1;
+//	cin >> T;
+	while (T--) solve();
+	return 0;
+}
+```
+
+### 7. [NOIP2003 普及组] 栈
+
+https://www.luogu.com.cn/problem/P1044
+
+> 题意：n个数依次进栈，随机出栈，问一共有多少种出栈序列？
+>
+> 思路一：dfs
+>
+> - 我们可以这么构造搜索树：已知对于当前的栈，一共有两种状态
+>     - 入栈 - 如果当前还有数没有入栈
+>     - 出栈 - 如果当前栈内还有元素
+> - 搜索参数：`i,j` 表示入栈数为 `i` 出栈数为 `j` 的状态
+> - 搜索终止条件
+>     - 入栈数 < 出栈数 - $i<j$
+>     - 入栈数 > 总数 $n$ - $i = n$
+> - 答案状态：入栈数为n，出栈数也为n
+> - 时间复杂度：$O(方案数)$
+>
+> 思路二：dp
+>
+> - 采用上述dfs时的状态表示方法，`i,j` 表示入栈数为 `i` 出栈数为 `j` 的状态。
+>
+> - 我们在搜索的时候，考虑的是接下来可以搜索的状态
+>
+>     1. 即出栈一个数的状态 - `i+1,j`
+>     
+>     2. 和入栈一个数的状态 - `i,j+1`
+>     
+>     如图：
+>     
+>     <img src="https://s2.loli.net/2023/11/21/wRQkKeEDhBZ6MC4.png" alt="image-20231121192133801" style="zoom:50%;" />
+>     
+>     而我们在dp的时候，需要考虑的是子结构的解来得出当前状态的答案，就需要考虑之前的状态。即当前状态是从之前的哪些状态转移过来的。和上述dfs思路是相反的。我们需要考虑的是
+>     
+>     1. 上一个状态入栈一个数到当前状态 - `i-1,j` $\to$ `i,j`
+>     2. 上一个状态出栈一个数到当前状态 - `i,j-1` $\to$ `i,j`
+>     
+>     - 特例：$i=j$ 时，只能是上述第二种状态转移而来，因为要始终保证入栈数大于等于出栈数，即 $i \ge j$
+>     
+>     如图：
+>     
+>     <img src="https://s2.loli.net/2023/11/21/NIKbWduh9P3rGD2.png" alt="image-20231121192152555" style="zoom: 33%;" />
+>     
+> - 我们知道，入栈数一定是大于等于出栈数的，即 $i\ge j$。于是我们在枚举 $j$ 的时候，枚举的范围是 $[1,i]$
+>
+> - $base$ 状态的构建取决于 $j=0$ 时的所有状态，我们知道没有任何数出栈也是一种状态，于是
+>     $$
+>     dp[i][0]=0,(i=1,2,3,...,n)
+>     $$
+>
+> - 时间复杂度：$O(n^2)$
+
+dfs代码
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int n, res;
+
+// 入栈i个数，出栈j个数
+void dfs(int i, int j) {
+	if (i < j || i > n) return;
+
+	if (i == n && j == n) res++;
+
+	dfs(i + 1, j);
+	dfs(i, j + 1);
+}
+
+void solve() {
+	cin >> n;
+	dfs(0, 0);
+	cout << res << "\n";
+}
+
+signed main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr), cout.tie(nullptr);
+	int T = 1;
+//	cin >> T;
+	while (T--) solve();
+	return 0;
+}
+```
+
+dp代码
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int N = 20;
+
+int n;
+ll dp[N][N]; // dp[i][j] 表示入栈数为i，出栈数为j的方案总数
+
+void solve() {
+	cin >> n;
+
+	// base状态：没有数出栈也是一种状态
+	for (int i = 1; i <= n; i++) dp[i][0] = 1;
+
+	// dp转移
+	for (int i = 1; i <= n; i++)
+		for (int j = 1; j <= i; j++)
+			if (i == j) dp[i][j] = dp[i][j - 1];
+			else dp[i][j] = dp[i - 1][j] + dp[i][j - 1];
+
+	cout << dp[n][n] << "\n";
+}
+
+signed main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr), cout.tie(nullptr);
+	int T = 1;
+//	cin >> T;
+	while (T--) solve();
+	return 0;
+}
+```
 
 ## 博弈论
 
@@ -988,6 +1895,759 @@ int main()
 }
 ```
 
+### 5. Smilo and Monsters
+
+https://codeforces.com/contest/1891/problem/C
+
+> 题意：给定一个序列，其中每一个元素代表一个怪物群中的怪物的数量。现在有两种操作：
+>
+> 1. 选择一个怪物群，杀死其中的一只怪物。同时累加值 $x+=1$
+> 2. 选择一个怪物群，通过之前积累的累加值，一次性杀死当前怪物群中的 $x$ 只怪物，同时累加值 $x$ 归零
+>
+> 现在询问杀死所有怪物的最小操作次数
+>
+> 思路：一开始我是分奇偶进行判断的，但是那只是局部最优解，全局最优解的计算需要我们“纵观全局”。
+>
+> 我们可以先做一个假设：假设当前只有一个怪物群，为了最小化操作次数，最优解肯定是先杀死一半的怪物（假设数量为n，则获得累计值x=n），然后无论剩余n个还是n+1个，我们都使用累计值x一次性杀死n个怪物。
+>
+> 现在我们回到原题，有很多个怪物群，易证，最终的最优解也一点是最大化利用操作2，和特殊情况类似，能够利用的一次性杀死的次数就是怪物总数的一半。区别在于：此时不止一个怪物群。那么我们就要考虑累加值如何使用。很容易想到先将怪物群按照数量大小进行排序，关键就在于将累加值从小到大进行使用还是从大到小进行使用。可以发现，对于一个确定的累加值，由于操作2的次数也会算在答案中。那么如果从最小的怪物群开始使用，就会导致操作2的次数变多。因此我们需要从最大值开始进行操作2。
+>
+> 那么最终的答案就是：
+>
+> - 首先根据怪物数量的总和计算出最终的累加值s（s=sum/2）
+> - 接着我们将怪物群按照数量进行升序排序
+> - 然后我们从怪物数量最大的开始进行操作2，即一次性杀死当前怪物群，没进行一次，答案数量+1
+> - 最后将答案累加上无法一次性杀死的怪物群中怪物的总数
+>
+> 时间复杂度：$O(n \log n)$
+
+```c++
+void solve() {
+	n = read(); s = 0; res = 0;
+	for (int i = 1; i <= n; i++) {
+		a[i] = read();
+		s += a[i];
+	}
+ 
+	s >>= 1;
+ 
+	sort(a + 1, a + n + 1);
+ 
+	for (int i = n; i >= 1; i--) {
+		if (s >= a[i]) {
+			s -= a[i], a[i] = 0, res++;
+		} else if (s) {
+			a[i] -= s;
+			s = 0;
+			res++;
+		}
+	}
+ 
+	for (int i = 1; i <= n; i++) {
+		res += a[i];
+	}
+ 
+	printf("%lld\n", res);
+}
+```
+
+### 6. 通关
+
+https://www.lanqiao.cn/problems/5889/learning/?contest_id=145
+
+> 声明：谨以此题记录我的第一道正式图论题（存图技巧抛弃了y总的纯数组，转而使用动态数组`vector`进行建图）e.g.
+>
+> ```c++
+> struct Node {
+>  int id;		// 当前结点的编号
+>  int a;	// 属性1
+>  int b;	// 属性2
+> };
+> vector<Node> G[N];
+> ```
+>
+> 题意：给定一棵树，每个结点代表一个关卡，每个关卡拥有两个属性：通关奖励值`val`和可通关的最低价值`cost`。现在从根节点开始尝试通关，每一个结点下面的关卡必须要当前结点通过了之后才能继续闯关。问应该如何选择通关规划使得通过的关卡数最多？
+>
+> 思路：一开始想到的是直接莽bfs，对每一层结点按照cost升序排序进行闯关，然后wa麻了。最后一看正解原来是还不够贪。正确的闯关思路应该是始终选择当前可以闯过的cost最小的关卡，而非限定在了一层上。因此我们最终的闯关顺序是：对于所有解锁的关卡，选择cost最小的关卡进行通关，如果连cost最小的关卡都无法通过就直接结束闯关。那么我们应该如何进行代码的编写呢？分析可得，解锁的关卡都是当前可通过的关卡的所有子结点，而快速获得当前cost最小值的操作可以通过一个堆来维护。
+>
+> 时间复杂度：$O(n \log n)$
+
+```c++
+const int N = 100010;
+typedef long long ll;
+
+struct Node {
+    int id;
+    int val;
+    int cost;
+    // 有趣的重载
+    bool operator< (const Node& t) const {
+        return this->cost > t.cost;
+    }
+};
+
+int n, p;
+ll res;
+vector<Node> G[N];
+priority_queue<Node> q;
+
+void bfs() {
+    q.push(G[0][0]);
+
+    while (q.size()) {
+        Node now = q.top();
+        q.pop();
+        if (p >= now.cost) {
+            res++;
+            p += now.val;
+            for (auto& child: G[now.id]) {
+                q.push(child);
+            }
+        } else {
+            break;
+        }
+    }
+}
+
+void solve() {
+    cin >> n >> p;
+    for (int i = 1; i <= n; i++) {
+        int fa, v, c;
+        cin >> fa >> v >> c;
+        G[fa].push_back({i, v, c});
+    }
+    bfs();
+    cout << res << "\n";
+}
+```
+
+### 7. 串门
+
+https://www.lanqiao.cn/problems/5890/learning/?contest_id=145
+
+> 题意：给定一棵无向树，边权为正。现在询问在访问到每一个结点的情况下最小化行走的路径长度
+>
+> 思路：首先我们不管路径长度的长短，我们直接开始串门。可以发现，我们一点会有访问的起点和终点，那么在起点到终点的这条路上，可能会有很多个分叉，对于每一个分叉，我们都需要进入再返回来确保分叉中的结点也被访问到，那么最终的路径长度就是总路径长度的2倍 - 起点到终点的距离，知道了这个性质后。我们可以发现，路径的总长度是一个定值，我们只有最大化起点到终点距离才能确保行走路径长度的最小值。那么问题就转化为了求解一棵树中，最长路径长度的问题。即求解树的直径的问题。
+>
+> 树的直径：首先我们反向考虑，假设知道了直径的一个端点，那么树的直径长度就是这棵树以当前结点为根的深度。那么我们就需要先确定一个直径的端点。不难发现，对于树中的任意一个结点，距离它最远的一个（可能是两个）结点一定是树的直径的端点。那么问题就迎刃而解了。
+>
+> 为了降低代码量，我们可以设置一个dist数组来记录当前结点到根的距离。
+>
+> - 在确定直径端点的时候，选择任意一个结点为根节点，然后维护dist数组，最终dist[i~n]中的最大值对应的下标maxi就是直径的一个端点。
+> - 接着在计算直径长度的时候，以maxi为树根，再来一次上述的维护dist数组的过程，最终dist[1~n]中的最大值就是树的直径的长度
+>
+> 时间复杂度：$O(n)$
+
+```c++
+const int N = 100010;
+typedef long long ll;
+
+struct Node {
+	int id;
+	ll w;
+};
+
+int n;
+vector<Node> G[N];
+bool st[N];
+ll sum, d, dist[N];
+
+/**
+ * @note 计算当前所有子结点到当前点的距离
+ * @param now 当前点的编号
+ * @param x 上一个点到当前点的距离
+ */
+void dfs(int now, ll x) {
+	if (!st[now]) {
+		st[now] = true;
+		dist[now] = x;
+		for (int i = 0; i < G[now].size(); i++) {
+			int ch = G[now][i].id;
+			dfs(ch, x + G[now][i].w);
+		}
+	}
+}
+
+void solve() {
+	cin >> n;
+	for (int i = 0; i < n - 1; i++) {
+		int a, b, w;
+		cin >> a >> b >> w;
+		sum += w;
+		G[a].push_back({b, w});
+		G[b].push_back({a, w});
+	}
+
+	// 以1号点为根，计算所有点到1号点的距离
+	dfs(1, 0);
+
+	memset(st, 0, sizeof st);
+
+	// 到1号点最远的那个点的编号 maxi，即直径的一个端点
+	int maxi = 0;
+	for (int i = 1; i <= n; i++) {
+		if (dist[i] > dist[maxi]) {
+			maxi = i;
+		}
+	}
+
+	// 以直径的一个端点 maxi 为根，计算所有点到 maxi 点的距离
+	dfs(maxi, 0);
+
+	// 找到直径长度
+	for (int i = 1; i <= n; i++) {
+		d = max(d, dist[i]);
+	}
+
+	cout << sum * 2 - d << "\n";
+}
+```
+
+### 8. Codeforces rating
+
+https://vijos.org/d/nnu_contest/p/1532
+
+> 题意：现在已知一个初始值R，现在给定了n个P值，选择其中的合适的值，使得最终的 $R'=3/4 R + 1/4 P$ 最大
+>
+> 思路：首先一点就是我们一定要选择P比当前R大的值，接下来就是选择合适的P使得最终迭代出来的R'最大。首先我们知道，对于筛选出来的比当前R大的P集合，任意选择其中的一个P，都会让R增大，但是不管增加多少都是不会超过选择的P。那么显然，如果筛选出来的P集合是一个递增序列，那么就可以让R不断的增加。但是这一定是最大的吗？我们不妨反证一下，现在我们有两个P，分别为x，y，其中 $x<y$。
+>
+> 那么按照上述思路，首先就是 
+> $$
+> R’=\frac{3}{4}R+\frac{1}{4}x(R'<x)
+> $$
+> 接着就是 
+> $$
+> R''_1=\frac{3}{4}R'+\frac{1}{4}y(R''_1<y)=\frac{9}{16}R+\frac{3}{16}x+\frac{1}{4}y
+> $$
+> **反之**，首先选择一个较大的P=y，再选择一个较小的P=x，即首先就是
+> $$
+> R’=\frac{3}{4}R+\frac{1}{4}y(R'<y)
+> $$
+> 此时我们还不一点可以继续选择x，因为此时的R'可能已经超过了x的值，那么我们按照最优的情况计算，可以选择x，那么就是
+> $$
+> R''_2=\frac{3}{4}R'+\frac{1}{4}x(R''_2<x)=\frac{9}{16}R+\frac{3}{16}y+\frac{1}{4}x
+> $$
+> 可以发现
+> $$
+> R''_2-R''_1=\frac{1}{16}(x-y)<0
+> $$
+> 即会使得最终的答案变小。因此最优的策略就是按照增序进行叠加计算
+>
+> ==注意点：==
+>
+> 四舍五入的语句
+>
+> ```c++
+> cout << (int)(res + 0.5) << "\n";
+> ```
+
+```c++
+void solve() {
+	cin >> n >> k;
+	for (int i = 0; i < n; i++) {
+		cin >> a[i];
+	}
+
+	sort(a, a + n);
+
+	int i = 0;
+	for (; i < n; i++) {
+		if (a[i] > k) {
+			break;
+		}
+	}
+
+	double res = k;
+
+	for (; i < n; i++) {
+		res = (res * 3.0 + a[i] * 1.0) / 4.0;
+	}
+
+	cout << (int)(res + 0.5) << "\n";
+}
+```
+
+## 数论
+
+### 1. Divide and Equalize
+
+> 题意：给定 $n$ 个数，问能否找到一个数 $num$，使得 $num^n = \prod_{i=1}^{n}a_i$
+>
+> 原始思路：起初我的思路是二分，我们需要寻找一个数使得n个数相乘为原数组所有元素之积，那么我们预计算出所有数之积，并且在数组最大值和最小值之间进行二分，每次二分出来的数计算n次方进行笔比较即可。但是有一个很大的问题是，数据量是 $10^4$，而数字最大为 $10^6$，最大之积为 $10^{10}$ 吗？不是！最大之和才是，最大之积是 $10^{6\times10^4}$
+>
+> 最终思路：我们可以将选数看做多个水池匀水的过程。现在每一个水池的水高都不定，很显然我们一定可以一个值使得所有的水池的高度一致，即 $\frac{\sum_{i=1}^{n}a_i}{n}$。但是我们最终的数字是一个整数，显然不可以直接求和然后除以n，那么应该如何分配呢？我们知道水池之所以可以直接除以n，是因为水的最小分配单位是无穷小，可以随意分割；而对于整数而言，最小分配单位是什么呢？答案是==质因子==！为了通过分配最小单位使得最终的“水池高度一致”，我们需要让每一个“水池”获得的数值相同的质因子数量相同。于是我们只需要统计一下数组中所有数的质因子数量即可。如果对于每一种质因子的数量都可以均匀分配每一个数（即数量是n的整数倍），那么就一定可以找到这个数使得 $num^n = \prod_{i=1}^{n}a_i$
+
+```c++
+void solve() {
+	int n;
+	cin >> n;
+
+	// 统计所有数字的所有质因数
+	unordered_map<int, int> m;
+	for (int i = 0; i < n; i++) {
+		int x;
+		cin >> x;
+
+		for (int k = 2; k <= x / k; k++) {
+			if (x % k == 0) {
+				while (x % k == 0) {
+					m[k]++;
+					x /= k;
+				}
+			}
+		}
+
+		if (x > 1) {
+			m[x]++;
+		}
+	}
+
+	// 查看每一种质因数是否是n的整数倍
+	for (auto& x: m) {
+		if (x.second % n) {
+			cout << "No\n";
+			return;
+		}
+	}
+
+	cout << "Yes\n";
+}
+```
+
+### 2. Deja Vu
+
+https://codeforces.com/contest/1891/problem/B
+
+> 题意：给点序列a和b，对于b中的每一个元素 $b_i$，如果a中的元素 $a_j$ 能够整除 $2^{b_i}$，则将 $a_j$ 加上 $2^{b_i - 1}$。给出最后的a序列
+>
+> 思路：我们很容易就想到暴力的做法，即两层循环，第一层枚举b中的元素，第二层枚举a中的元素，如果a中的元素能够整除2
+>
+> 的bi次方，就将a中相应的元素加上一个值即可。但是时间复杂度肯定过不了。于是我们考虑优化。
+>
+> 时间复杂度：$O(nm)$
+>
+> 优化：现在我们假设a中有一个数 $a_j$ 是 $2^{b_i}$ 的整数倍（其中 $b_i$ 是b序列中第一个枚举到的能够让 $a_i$ 整除的数），那么就有 $a_j = k2^{b_i}(k=1,2,...,)$，那么 $a_j$ 就要加上 $2^{b_i-1}$，于是 $a_j$ 就变为了 $k2^{b_i}+2^{b_i-1}=(2k+1)2^{b_i-1}$。此后 $a_j$ 就一定是 $2^t(t\in \left[ 1,b_i-1 \right])$的倍数。
+>
+> - 因此我们需要做的就是首先找到b序列中第一个数x，能够在a中找到数是 $2^x$ 的整数倍
+>
+>     > 这一步可以这样进行：对于a中的每一个数，我们进行30次循环统计当前数是否是 $2^i$ 的倍数，如果是就用哈希表记录当前的 $i$。最后我们在遍历寻找x时，只需要查看当前的x是否被哈希过即可
+>
+> - 接着我们统计b序列中从x开始的严格降序序列c（由题意知，次序列的数量一定 $\le$ 30，因为b序列中数值的值域为 $[1~30]$）
+>
+> - 最后我们再按照原来的思路，双重循环a序列和c序列即可
+>
+> 时间复杂度：$O(30n)$
+
+```c++
+void solve() {
+	int n, m;
+	cin >> n >> m;
+
+	vector<int> a(n + 1), b(m + 1);
+	unordered_map<int, int> ha;
+
+    // 边读边哈希
+	for (int i = 1; i <= n; i++) {
+		cin >> a[i];
+		for (int j = 30; j >= 1; j--) {
+			if (a[i] % (1 << j) == 0) {
+				ha[j]++;
+			}
+		}
+	}
+
+	for (int i = 1; i <= m; i++) {
+		cin >> b[i];
+	}
+
+	// 寻找b中第一个能够让a[j]整除的数b[flag]
+	int flag = -1;
+	for (int i = 1; i <= m; i++) {
+		if (ha[b[i]]) {
+			flag = i;
+			break;
+		}
+	}
+
+    // 特判
+	if (flag == -1) {
+		for (int j = 1; j <= n; j++) {
+			cout << a[j] << " \n"[j == n];
+		}
+		return;
+	}
+
+    // 寻找b中从flag开始的严格单调递减的序列c
+	vector<int> c;
+	c.push_back(b[flag]);
+	for (; flag <= m; flag++) {
+		if (b[flag] < c.back()) {
+			c.push_back(b[flag]);
+		}
+	}
+
+    // 暴力循环一遍即可
+	for (int j = 1; j <= n; j++) {
+		for (int k = 0; k < c.size(); k++) {
+			if (a[j] % (1 << c[k]) == 0) {
+				a[j] += 1 << (c[k] - 1);
+			}
+		}
+	}
+
+	for (int j = 1; j <= n; j++) {
+		cout << a[j] << " \n"[j == n];
+	}
+}
+```
+
+## 计算几何
+
+### 1. Minimum Manhattan Distance
+
+https://codeforces.com/gym/104639/problem/J
+
+> 题意：给定两个圆的直径的两个点坐标，其中约束条件是两个圆一定是处在相离的两个角上。问如何在C2圆上或圆内找到一点p，使得点p到C1圆的所有点的曼哈顿距离的期望值最小
+>
+> 思路：
+>
+> 1. 看似需要积分，其实我们可以发现，对于点p到C1中某个点q1的曼哈顿距离，我们一定可以找到q1关于C1对称的点q2，那么点p到q1和q2的曼哈顿距离之和就是点p到C1的曼哈顿距离的两倍（证明就是中线定理）那么期望的最小值就是点p到C1的曼哈顿距离的最小值。目标转化后，我们开始思考如何计算此目标的最小值，思路如下图
+> 2. <img src="C:/Users/%E8%91%A3%E6%96%87%E6%9D%B0/AppData/Roaming/Typora/typora-user-images/image-20231031233842979.png" alt="image-20231031233842979" style="zoom: 25%;" />
+>
+> ==注意点：==
+>
+> 1. double的读取速度很慢，可以用 `int` or `long long` 读入，后续强制类型转换（显示 or 和浮点数计算）
+> 2. 注意输出答案的精度控制 `cout << fixed << setprecision(10) << res << "\n";`
+
+```c++
+void solve() {
+	double x1, y1, x2, y2;
+	long long a, b, c, d;
+
+	cin >> a >> b >> c >> d;
+	x1 = (a + c) / 2.0;
+	y1 = (b + d) / 2.0;
+
+	cin >> a >> b >> c >> d;
+	x2 = (a + c) / 2.0;
+	y2 = (b + d) / 2.0;
+
+	double r2 = sqrt((a - c) * (a - c) + (b - d) * (b - d)) / 2;
+
+	cout << fixed << setprecision(10) <<  abs(x1 - x2) + abs(y1 - y2) - sqrt(2) * r2 << "\n";
+}
+```
+
+## DS
+
+### 1. 单调栈
+
+https://www.acwing.com/problem/content/832/
+
+> 题意：对于一个序列中的每一个元素，寻找每一个元素前面第一个比他小的元素
+>
+> 思路：
+>
+> - 首先很容易想到一个暴力的做法，就是对于每一个数，再从 $i \to 0$ 进行枚举寻找第一个比当前数小的那个数
+> - 时间复杂度：$O(n^2)$
+>
+> 优化：首先每一个数一定是要遍历到的，那么关键在于如何优化掉寻找前面的最近的比他小的数的计算过程。我们逆向思考一下，不要考虑当前数字 `a[i]` 前面最近的一个比他小的数字我们考虑当前数字如何才能成为后面数字的最近的最小值。
+>
+> 我们将这个序列想象成一个散点图
+>
+> - 如果当前数字能够成为后面的最近的最小值，那么当前数字就一定严格小于后面的数字。保留当前的散点
+>
+> - 那么与上面相反的是，如果 `a[i]>=后面的数字` 那么当前数字就一定不可能成为后面数字的最近的比他小的数字，就需要不断删除当前数以及前面的数，直到第一次寻找到比当前数小的那个数。
+>
+> 经过上述流程之后，我们发现，此时的“散点图”上剩下来的点，呈现一个严格单调递增的形状。于是优化的思路就来了：
+>
+> 我们只需要在扫描到 `a[i]` 的时候，维护 `a[0]` 到 `a[i-1]` 中的单调递增的序列即可，算法思路就是：
+>
+> 如果当前数 >   容器中的最后一个数，那么当前数的最近的那个数就是容器中的最后一个数
+>
+> 如果当前数 <= 容器中的最后一个数，那么就需要不断删除容器中的最后一个数，直到最后一个数 < 当前数，那么当前容器中的最后一个数就是当前数最近的那个比他小的数
+>
+> 最后将当前数加入容器尾部即可维护一个单调递增序列了。
+>
+> 至于选用什么样的容器，支持高效率查询尾部元素、高效率尾插入、高效率尾删除，即可。那么数组、栈、队列等很多线性结构的容器都是可以的。我们这里选用数组。
+>
+> 时间复杂度：$O(2n)$
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr), cout.tie(nullptr);
+    
+    int n; cin >> n;
+    vector<int> a(n + 1);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    vector<int> v;
+    
+    for (int i = 0; i < n; i++) {
+        if (v.empty()) {
+            cout << -1 << " ";
+            v.push_back(a[i]);
+        } 
+        else {
+            while (!v.empty() && a[i] <= v.back()) {
+                v.pop_back();
+            }
+            if (v.empty()) {
+                cout << -1 << " ";
+            } else {
+                cout << v.back() << " ";
+            }
+            v.push_back(a[i]);
+        }
+    }
+    
+    return 0;
+}
+```
+
+### 2. 【模板】最近公共祖先（LCA）
+
+https://www.luogu.com.cn/problem/P3379
+
+> 题意：寻找树中指定两个结点的最近公共祖先
+>
+> 思路：对于每次查询，我们可以从指定的两个结点开始往上跳，第一个公共结点就是目标的LCA，每一次询问的时间复杂度均为 $O(n)$，为了加速查询，我们可以采用倍增法，预处理出往上跳的结果，即 `fa[i][j]` 数组，表示 $i$ 号点向上跳 $2^j$ 步后到达的结点。接下来在往上跳跃的过程中，利用二进制拼凑的思路，即可在 $O(\log n)$ 的时间内查询到LCA。
+>
+> 预处理：可以发现，对于 `fa[i][j]`，我们可以通过递推的方式获得，即 `fa[i][j] = fa[fa[i][j-1]][j-1]`，当前结点向上跳跃 $2^j$ 步可以拆分为先向上 $2^{j-1}$ 步，在此基础之上再向上 $2^{j-1}$ 步。于是我们可以采用宽搜 $or$ 深搜的顺序维护 $fa$ 数组。
+>
+> 跳跃：我们首先需要将两个结点按照倍增的思路向上跳到同一个深度，接下来两个结点同时按照倍增的思路向上跳跃，为了确保求出最近的，我们需要确保在跳跃的步调一致的情况下，两者的祖先始终不相同，那么倍增结束后，两者的父结点就是最近公共祖先，即 `fa[x][k]` 或 `fa[y][k]`
+>
+> 时间复杂度：$O(n \log n + m \log n)$ 
+>
+> - $n \log n$ 为预处理每一个结点向上跳跃抵达的情况
+> - $m \log n$ 为 $m$ 次询问的情况
+
+```c++
+const int N = 5e5 + 10;
+
+int n, Q, root;
+vector<int> G[N];
+int fa[N][20], dep[N];
+queue<int> q;
+
+void init() {
+	dep[root] = 1;
+	q.push(root);
+
+	while (q.size()) {
+		int now = q.front();
+		q.pop();
+		for (int ch: G[now]) {
+			if (!dep[ch]) {
+				dep[ch] = dep[now] + 1;
+				fa[ch][0] = now;
+				for (int k = 1; k <= 19; k++) {
+					fa[ch][k] = fa[ fa[ch][k-1] ][k-1];
+				}
+				q.push(ch);
+			}
+		}
+	}
+}
+
+int lca(int a, int b) {
+	if (dep[a] < dep[b]) swap(a, b);
+
+	for (int k = 19; k >= 0; k--)
+		if (dep[fa[a][k]] >= dep[b])
+			a = fa[a][k];
+
+	if (a == b) return a;
+
+	for (int k = 19; k >= 0; k--)
+		if (fa[a][k] != fa[b][k])
+			a = fa[a][k], b = fa[b][k];
+
+	return fa[a][0];
+}
+
+void solve() {
+	cin >> n >> Q >> root;
+	for (int i = 0; i < n - 1; ++i) {
+		int a, b;
+		cin >> a >> b;
+		G[a].push_back(b);
+		G[b].push_back(a);
+	}
+
+	init();
+
+	while (Q--) {
+		int a, b;
+		cin >> a >> b;
+		cout << lca(a, b) << "\n";
+	}
+}	
+```
+
+### 3. [USACO19DEC] Milk Visits S
+
+https://www.luogu.com.cn/problem/P5836
+
+> tag：并查集
+>
+> 题意：给定一棵树，结点被标记成两种，一种是H，一种是G，在每一次查询中，需要知道指定的两个结点之间是否含有某一种标记
+>
+> 思路：对于树上标记，我们可以将相同颜色的分支连成一个连通块
+>
+> - 如果查询的两个结点在同一个连通块，则查询两个结点所在的颜色与所需的颜色是否匹配即可
+> - 如果查询的两个结点不在同一个连通块，两个结点之间的路径一定是覆盖了两种颜色的标记，则答案一定是1
+>
+> 时间复杂度：$O(n+m)$
+
+```c++
+const int N = 100010;
+
+int n, m, p[N];
+char col[N];
+
+int find(int x) {
+	if (p[x] != x) {
+		p[x] = find(p[x]);
+	}
+	return p[x];
+}
+
+void solve() {
+	cin >> n >> m;
+	cin >> (col + 1);
+
+	for (int i = 1; i <= n; i++) {
+		p[i] = i;
+	}
+
+	for (int i = 1; i <= n - 1; i++) {
+		int a, b;
+		cin >> a >> b;
+		if (col[a] == col[b]) {
+			p[find(a)] = find(b);
+		}
+	}
+
+	string res;
+
+	while (m--) {
+		int u, v;
+		cin >> u >> v;
+
+		char cow;
+		cin >> cow;
+
+		if (find(u) == find(v)) {
+			res += to_string(col[u] == cow);
+		} else {
+			res += '1';
+		}
+	}
+
+	cout << res << "\n";
+}
+```
+
+## 图论
+
+### 1. 有向图的拓扑序列
+
+https://www.acwing.com/problem/content/850/
+
+> 题意：输出一个图的拓扑序，不存在则输出-1
+>
+> 思路：
+>
+> - 首先我们要知道拓扑图的概念，感官上就是一张图可以从一个方向拓展到全图，用数学语言就是：若一个由图中所有点构成的序列 A 满足：对于图中的每条边 (x,y)，x 在 A 中都出现在 y 之前，则称 A 是该图的一个拓扑序列
+> - 接着我们就想要寻找这样的序列 A 了，可以发现对于每一个可扩展的点，入度一定为0，那么我们就从这些点开始宽搜，将搜到的点的入度-1，即删除这条边，直到最后。如果全图的点的入度都变为了0，则此图可拓扑
+>
+> 时间复杂度：$O(n+m)$
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 100010;
+
+int n, m;
+vector<int> G[N];
+
+void solve() {
+	// 建图 
+	cin >> n >> m;
+	vector<int> d(n + 1, 0);
+	for (int i = 1; i <= m; i++) {
+		int a, b;
+		cin >> a >> b;
+		d[b]++;
+		G[a].push_back(b);
+	}
+	
+	// 预处理宽搜起始点集
+	queue<int> q;
+	for (int i = 1; i <= n; i++)
+		if (!d[i])
+			q.push(i);
+	
+	// 宽搜处理
+	vector<int> res;
+	while (q.size()) {
+		auto h = q.front();
+		q.pop();
+		res.push_back(h);
+		
+		for (auto& ch: G[h]) {
+			d[ch]--;
+			if (!d[ch]) q.push(ch);
+		}
+	}
+	
+	// 输出合法拓扑序
+	if (res.size() == n) {
+		for (auto& x: res) {
+			cout << x << " ";
+		}
+	} else {
+		cout << -1 << "\n";
+	}
+}
+
+int main() {
+	solve();
+	return 0;
+}
+```
+
+### 2. Mad City
+
+https://codeforces.com/contest/1873/problem/H
+
+> tag：基环树、拓扑排序
+>
+> 题意：给定一个基环树，现在图上有两个点，分别叫做A，B。现在B想要逃脱A的抓捕，问对于给定的局面，B能否永远逃离A的抓捕
+>
+> 思路：思路很简单，我们只需要分B所在位置的两种情况讨论即可
+>
+> 1. B不在环上：此时我们记距离B最近的环上的那个点叫 $tag$，我们需要比较的是A到tag点的距离 $d_A$ 和B到tag的距离 $d_B$，如果 $d_B < d_A$，则一定可以逃脱，否则一定不可以逃脱
+> 2. B在环上：此时我们只需要判断当前的A点是否与B的位置重合即可，如果重合那就无法逃脱，反之B一定可以逃脱。
+>
+> 代码实现：
+>
+> 1. 对于第一种情况，我们需要找到tag点以及计算A和B到tag点的距离，
+>
+> 时间复杂度：
+
+```c++
+
+```
+
 ## 思维题
 
 ### 1. 最长严格递增子序列
@@ -1008,7 +2668,6 @@ using namespace std;
 
 int main()
 {
-
     int T;
     cin >> T;
 
@@ -1267,6 +2926,149 @@ int main() {
     return 0;
 }
 ```
+
+### 4.Sorting with Twos
+
+https://codeforces.com/contest/1891/problem/A
+
+> 题意：给定一个序列，现在需要通过以下方法对序列进行升序排序
+>
+> - 可以选择前 $2^m$ 个数执行 $-1$ 的操作（保证不会越界的情况下）
+>
+> 现在需要确定给定的序列经过k次上述后能否变为升序序列
+>
+> 思路：我们可以将每 $2^k$ 个数看成一个数，可以不断的-1。那么可以发现执行一定的次数后，一定可以实现升序序列。但是现在是 $2^k$ 个数，那么只需要这相邻区段的数是升序即可，即 $2^{k-1} \to 2^k$ 之间的数是升序即可。按区间进行判断即可
+>
+> 时间复杂度：$O(n)$
+
+```c++
+void judge(vector<int>& a, int l, int r, bool& ok, int n) {
+	for (int i = l + 1; i <= r && i <= n; i++) {
+		if (a[i] < a[i - 1]) {
+			ok = false;
+			return;
+		}
+	}
+}
+ 
+void solve() {
+	int n;
+	cin >> n;
+ 
+	vector<int> a(n + 1);
+	for (int i = 1; i <= n; i++) {
+		cin >> a[i];
+	}
+ 
+	bool ok = true;
+	judge(a, 3, 4, ok, n);
+	judge(a, 5, 8, ok, n);
+	judge(a, 9, 16, ok, n);
+	judge(a, 17, 20, ok, n);
+ 
+	if (ok) {
+		cout << "YES\n";
+	} else {
+		cout << "NO\n";
+	}
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
