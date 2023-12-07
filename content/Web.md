@@ -592,7 +592,7 @@ CentOS、Ubuntu和Deepin都是不同的Linux发行版本
 
 ### 4.2.2 服务器信息
 
-```
+```bash
 [root@DwjDemo1 ~]# cat /etc/os-release
 
 NAME="Alibaba Cloud Linux"								发行版的名称
@@ -616,3 +616,130 @@ HOME_URL="https://www.aliyun.com/"						发行版的官方网站链接
 ## 5.1 什么是Node.js
 
 Node.js是一个基于 Chrome V8 引擎的 JavaScript 运行环境
+
+# 6、部署flask
+
+## 6.1 远程连接服务器
+
+利用阿里云自带的服务器连接入口，远程连接服务器
+
+```bash
+[root@DwjDemo1 ~]# cat /etc/os-release
+
+NAME="Alibaba Cloud Linux"								发行版的名称
+VERSION="3 (Soaring Falcon)"							发行版的版本号
+ID="alinux"												唯一的标识符
+ID_LIKE="rhel fedora centos anolis"						一些类似的发行版
+VERSION_ID="3"											发行版的版本编号
+PLATFORM_ID="platform:al8"								平台的标识符
+PRETTY_NAME="Alibaba Cloud Linux 3 (Soaring Falcon)"	可读的发行版名称和版本号
+ANSI_COLOR="0;31"										ANSI终端输出的颜色: "0;31"，通常用于表示错误或警告信息
+HOME_URL="https://www.aliyun.com/"						发行版的官方网站链接
+```
+
+---
+
+## 6.2 环境配置
+
+在服务器中安装pip3
+
+```bash
+yum install -y python3-pip
+```
+
+检查所需py模块
+
+```bash
+pip3 freeze >requirements.txt
+```
+
+---
+
+## 6.3 数据库配置
+
+在服务器和bt面板中同时放通mysql专属端口：3306 ？（为什么bt面板还有一个安全组？？？）
+
+在服务器中安装mysql（可以通过bt面板）
+
+修改mysql登录密码（可以通过bt面板）
+
+在服务器中连接mysql
+
+```mysql
+mysql -uroot -p
+```
+
+授予权限给自己
+
+```mysql
+# MySQL 5 版本
+GRANT ALL ON *.* TO root@'%' IDENTIFIED BY '替换成你的root密码' WITH GRANT OPTION;
+
+# MySQL 8 版本
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '替换成你的root密码';
+```
+
+使用数据库
+
+```mysql
+use mysql
+```
+
+允许远程登录数据库
+
+```mysql
+update user set host = '%' where user = 'root';
+```
+
+刷新更新配置
+
+```my
+FLUSH PRIVILEGES;
+```
+
+修改项目中 `config.py` 中的配置信息
+
+```python
+# @Time   : 2023-12-03 23:25
+# @File   : config.py
+# @Author : Mr_Dwj
+
+'''
+配置文件：
+	1. 数据库配置信息
+	2. ...
+'''
+
+# 数据库的配置信息
+HOSTNAME = '47.113.205.127'
+PORT = '3306'
+DATABASE = 'test1'
+USERNAME = 'root'
+PASSWORD = 'dwjadmin'
+DB_URI = 'mysql+pymysql://{}:{}@{}:{}/{}?charset=utf8mb4'.format(USERNAME, PASSWORD, HOSTNAME, PORT, DATABASE)
+SQLALCHEMY_DATABASE_URI = DB_URI
+```
+
+本地连接远程数据库
+
+<img src="https://s2.loli.net/2023/12/07/ocUCG1N3PBEH6m2.png" alt="image-20231207232537233" style="zoom:50%;" />
+
+<img src="https://s2.loli.net/2023/12/07/tg3WfE2r1pF8kIU.png" alt="image-20231207232615304" style="zoom:50%;" />
+
+```bash
+DBMS: MySQL (ver. 5.7.43-log)
+Case sensitivity: plain=exact, delimited=exact
+Driver: MySQL Connector/J (ver. mysql-connector-java-8.0.25 (Revision:), JDBC4.2)
+Ping: 405 ms
+SSL: yes
+```
+
+拷贝数据库表
+
+直接在DataGrip中寻找进行复制即可
+
+<img src="https://s2.loli.net/2023/12/07/inUoMYVPatjzW3Q.png" alt="image-20231207232434015" style="zoom:50%;" />
+
+---
+
+​	
