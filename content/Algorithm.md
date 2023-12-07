@@ -1,4 +1,6 @@
-## 模拟
+# 一、解题记录
+
+## implementation
 
 ### 1. 所有三角形
 
@@ -185,7 +187,99 @@ int main()
 }
 ```
 
-## 二分
+## prefix and difference
+
+### 1. 充能计划
+
+https://www.lanqiao.cn/problems/8732/learning/?contest_id=147
+
+> 题意：给定 $n$ 个数初始化为 $0$，现在给定 $q$ 个位置，每个位置给定两个参数 $p、k$，表示从第 $k$ 个数开始连续 $s[p]$ 个数 $+1$。有以下两种约束
+>
+> 1. 如果连续 $s[p]$ 个数越界了，则越界的部分就不 $+1$
+> 2. 一个位置最多只能被一种 $p$ 对应的种类 $+1$
+>
+> 思路：
+>
+> - 现在假设只有一个种类的p，如果不考虑上述第二个条件的约束，那么就是纯差分。如果考虑了，那么我们从左到右考虑+1区间覆盖的问题，就需要判断当前位置是否被上一个+1区间覆盖过，解决办法就是**记录上一个区间覆盖的起始点or终止点**，这里选择起始点。
+> - 现在我们考虑多个种类的p，那么就是分种类重复上述思路即可，因为不同种类之间是没有约束上的冲突的。那么如何分种类解决呢，我们可以对输入的q个位置的所有p、k参数进行排序，p为第一关键词，k为第二个关键词。
+> - 时间复杂度：$O(q\log q+q+n)$
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int N = 100010;
+
+struct node {
+	int p, k; // 第p种宝石丢在了第k个坑
+	bool operator<(const node &t) const {
+		if (p == t.p) {
+			return k > t.k;
+		} else {
+			return p > t.p;
+		}
+	}
+};
+
+int n, m, q, s[N]; // n个坑，m种宝石，q个采集的宝石，s[i]表示第i种宝石的能量
+vector<int> last(N, -1e6); // last[i]表示上一个第i种宝石的位置
+int a[N], b[N]; // a[]为原数组，b[]为差分数组
+priority_queue<node> que;
+
+void solve() {
+	cin >> n >> m >> q;
+	for (int i = 1; i <= m; i++) {
+		cin >> s[i];
+	}
+
+	while (q--) {
+		int p, k;
+		cin >> p >> k;
+		que.push({p, k});
+	}
+
+	while (que.size()) {
+		auto h = que.top();
+		que.pop();
+		int p = h.p, k = h.k; // 第p种宝石丢在了第k个坑
+
+		int l, r;
+		if (k - last[p] >= s[p]) {
+			// 和上一种没有重叠
+			l = k, r = min(n, k + s[p] - 1);
+			b[l]++, b[r + 1]--;
+			last[p] = k;
+		} else {
+			// 和上一种有重叠
+			l = last[p] + s[p];
+			r = min(n, k + s[p] - 1);
+			if (l <= r) {
+				b[l]++, b[r + 1]--;
+			}
+			last[p] = k;
+		}
+	}
+
+	for (int i = 1; i <= n; i++) {
+		a[i] = a[i - 1] + b[i];
+		cout << a[i] << " \n"[i == n];
+	}
+}
+
+signed main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr), cout.tie(nullptr);
+	int T = 1;
+//	cin >> T;
+	while (T--) solve();
+	return 0;
+}
+```
+
+
+
+## binary search
 
 ### 1. Building an Aquarium
 
@@ -317,7 +411,7 @@ int main() {
 }
 ```
 
-## 哈希表
+## hashing
 
 ### 1. 分组
 
@@ -390,7 +484,7 @@ int main()
 }
 ```
 
-## DFS
+## dfs and similar
 
 ### 1. 机器人的运动范围
 
@@ -926,7 +1020,116 @@ signed main() {
 }
 ```
 
-## DP
+### 8. 外星密码
+
+https://www.luogu.com.cn/problem/P1928
+
+> 线性递归
+>
+> 题意：给定一个压缩后的密码串，需要解压为原来的形式。压缩形式距离
+>
+> - `AC[3FUN]` $\to$ `ACFUNFUNFUN`
+> - `AB[2[2GH]]OP` $\to$ `ABGHGHGHGHOP`
+>
+> 思路：
+>
+> - 我们采用递归的策略
+>
+> - 我们知道，对于每一个字符，一共有4种情况，分别是："字母"、"数字"、"["、"]"。如果是字母。我们分情况考虑
+>
+>     - "字母"：
+>         1. 直接加入答案字符串即可
+>     - "["：
+>         1. 获取左括号后面的整体 - 采用**递归**策略获取后面的整体
+>         2. 加入答案字符串
+>     - "数字"：
+>         1. 获取完整的数 - 循环小trick
+>         2. 获取数字后面的整体 - 采用**递归**策略获取后面的整体
+>         3. 加入答案字符串 - 循环尾加入即可
+>         4. **返回当前的答案字符串**
+>     - "]"：
+>         1. **返回当前的答案字符串** - 与上述 "[" 对应
+>
+> - 代码设计分析：
+>
+>     - 我们将压缩后的字符串看成由下面两种单元组成：
+>
+>         1. **最外层中括号组成的单元**：如 `[2[2AB]]` 就算一个最外层中括号组成的单元
+>         2. **连续的字母单元**：如 `OPQ` 就算一个连续的字母单元
+>
+>     - 解决各单元连接问题：
+>     - 为了在递归处理完第一种单元后还能继续处理后续的第二种单元，我们直接按照压缩字符串的长度进行遍历，即 `while (i < s.size())` 操作
+>     - 解决两种单元内部问题：
+>         - 最外层中括号组成的单元：递归处理
+>         - 连续的字母单元：直接加入当前答案字符串即可
+>
+> - 手模样例：
+>
+>     <img src="C:/Users/%E8%91%A3%E6%96%87%E6%9D%B0/AppData/Roaming/Typora/typora-user-images/image-20231125121853866.png" alt="image-20231125121853866" style="zoom: 50%;" />
+>
+>     - 显然按照定义，上述压缩字符串一共有五个单元
+>     - 我们用红色表示进入递归，蓝色表示驱动递归结束并回溯。可以发现
+>
+> - 时间复杂度：$O(\text{res.length()})$
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+string s;
+int i;
+
+string dfs() {
+	string res;
+
+	while (i < s.size()) {
+		if (s[i] >= 'A' && s[i] <= 'Z') {
+			while (s[i] >= 'A' && s[i] <= 'Z') {
+				res += s[i++];
+			}
+		}
+		if (s[i] == '[') {
+			i++;
+			res += dfs();
+		}
+		if (isdigit(s[i])) {
+			int cnt = 0;
+			while (isdigit(s[i])) {
+				cnt = cnt * 10 + s[i] - '0';
+				i++;
+			}
+			string t = dfs();
+			while (cnt--) {
+				res += t;
+			}
+			return res;
+		}
+		if (s[i] == ']') {
+			i++;
+			return res;
+		}
+	}
+
+	return res;
+}
+
+void solve() {
+	cin >> s;
+	cout << dfs() << "\n";
+}
+
+signed main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr), cout.tie(nullptr);
+	int T = 1;
+//	cin >> T;
+	while (T--) solve();
+	return 0;
+}
+```
+
+## dp
 
 ### 1. 对称山脉
 
@@ -1499,7 +1702,7 @@ https://www.luogu.com.cn/problem/P1044
 
 > 题意：n个数依次进栈，随机出栈，问一共有多少种出栈序列？
 >
-> 思路一：dfs
+> **思路一：dfs**
 >
 > - 我们可以这么构造搜索树：已知对于当前的栈，一共有两种状态
 >     - 入栈 - 如果当前还有数没有入栈
@@ -1511,7 +1714,7 @@ https://www.luogu.com.cn/problem/P1044
 > - 答案状态：入栈数为n，出栈数也为n
 > - 时间复杂度：$O(方案数)$
 >
-> 思路二：dp
+> **思路二：dp**
 >
 > - 采用上述dfs时的状态表示方法，`i,j` 表示入栈数为 `i` 出栈数为 `j` 的状态。
 >
@@ -1617,7 +1820,117 @@ signed main() {
 }
 ```
 
-## 博弈论
+### 8. 数楼梯
+
+https://www.luogu.com.cn/problem/P1255
+
+> 题意：给定楼梯的台阶数，每次可以走1步或者2步，问走到第n层台阶可以走的方案数
+>
+> 思路一：dfs
+>
+> - 我们可以从前往后思考，即正向思维。对于剩余的台阶，我们可以走1步或者走2步，最终走到第n层就算一种
+> - 时间复杂度：指数级别
+>
+> 思路二：递推（dp）
+>
+> - 对于递推的思路，我们从后往前考虑，即逆向思维。对于当前的层数，是从之前的哪几个台阶走过来的（即对于当前的状态，是之前哪几个状态转移过来的）。
+>
+> - 我们定义 `f[i]` 为走到第 `i` 层台阶的方案数
+>
+> - 则很显然第 `i` 层台阶是从前1个或者前2个台阶走过来的，于是状态转移方程就是
+>     $$
+>     f[i] = f[i - 1] + f[i - 2]
+>     $$
+>
+> - 时间复杂度：$O(n)$
+>
+> 注意：采用高精度加法
+
+dfs代码：
+
+```c++
+int n, res;
+
+void dfs(int x) {
+	if (x < 0) return;
+
+	if (x == 0) res++;
+
+	dfs(x - 1);
+	dfs(x - 2);
+}
+```
+
+递推（dp）代码：
+
+```c++
+int n;
+Int dp[N];
+
+void solve() {
+	cin >> n;
+
+	dp[1] = 1, dp[2] = 2;
+	for (int i = 3; i <= n; i++) {
+		dp[i] = dp[i - 1] + dp[i - 2];
+	}
+
+	cout << dp[n] << "\n";
+}
+```
+
+### 9. 蜜蜂路线
+
+https://www.luogu.com.cn/problem/P2437
+
+> 题意：可以按照下面的路线从小数到相邻大数，问给定起点和终点，一共有多少种走法
+>
+> <img src="C:/Users/%E8%91%A3%E6%96%87%E6%9D%B0/AppData/Roaming/Typora/typora-user-images/image-20231126231329349.png" alt="image-20231126231329349" style="zoom:33%;" />
+>
+> 思路：
+>
+> - 可以发现，对于每一个数 $i$，可以从 $i-1$ 和 $i-2$ 两个位置走过来。定义 $dp[i]$ 表示从 $1$ 走到 $i$ 的路线数（状态数），于是状态转移方程就是
+>     $$
+>     dp[i] = dp[i-1]+dp[i-2]
+>     $$
+>
+> - 方程一写其实就是斐波那契数，需要使用高精度加法
+>
+> 时间复杂度：$O(n)$
+
+```c++
+int m, n;
+Int dp[N];
+
+void solve() {
+	cin >> m >> n;
+	n = n - m + 1;
+
+	dp[1] = 1;
+	for (int i = 2; i <= n; i++) {
+		dp[i] = dp[i - 1] + dp[i - 2];
+	}
+
+	cout << dp[n] << "\n";
+}
+```
+
+### 10. Block Sequence :fire:
+
+https://codeforces.com/contest/1881/problem/E
+
+> 题意：给定一个序列，问最少可以删除其中的几个数，使得**最终**的序列满足：从中选择一些数 `num[]`，使得 `num[i]` 后面有 `num[i]` 个数，且这些数包括 `num[]` 涵盖且只涵盖了一遍最终序列中所有的数
+>
+> 思路：我们考虑动态规划。
+>
+> - 我们考虑状态表示：其中 `dp[i]` 表示使得序列 `[i,n]` 满足上述条件的最少删除个数
+> - 我们考虑状态转移：我们知道对于当前的数 `num[i]`，有两种状态 - 删除 | 不删除。
+
+```c++
+
+```
+
+## games
 
 ### 1. Salyg1n and the MEX Game
 
@@ -1677,7 +1990,7 @@ int main()
 } 
 ```
 
-## 贪心
+## greedy
 
 ### 1. green_gold_dog, array and permutation
 
@@ -2167,7 +2480,7 @@ void solve() {
 }
 ```
 
-## 数论
+## number theory
 
 ### 1. Divide and Equalize
 
@@ -2301,7 +2614,7 @@ void solve() {
 }
 ```
 
-## 计算几何
+## geometry
 
 ### 1. Minimum Manhattan Distance
 
@@ -2338,7 +2651,7 @@ void solve() {
 }
 ```
 
-## DS
+## data structures
 
 ### 1. 单调栈
 
@@ -2555,7 +2868,7 @@ void solve() {
 }
 ```
 
-## 图论
+## graphs
 
 ### 1. 有向图的拓扑序列
 
@@ -2625,7 +2938,7 @@ int main() {
 }
 ```
 
-### 2. Mad City
+### 2. Mad City:fire:
 
 https://codeforces.com/contest/1873/problem/H
 
@@ -2645,7 +2958,361 @@ https://codeforces.com/contest/1873/problem/H
 > 时间复杂度：
 
 ```c++
+#include <bits/stdc++.h>
+using namespace std;
 
+const int N = 200010;
+
+int n, a, b;
+vector<int> G[N];
+int rd[N], tag, d[N];
+bool del[N], vis[N];
+
+void init() {
+	for (int i = 1; i <= n; i++) {
+		G[i].clear();		// 存无向图 
+		rd[i] = 0;			// 统计每一个结点的入度 
+		del[i] = false;		// 拓扑删点删边时使用 
+		d[i] = 0;			// 图上所有点到 tag 点的距离 
+		vis[i] = false;		// bfs计算距离时使用 
+	}
+}
+
+void topu(int now) {
+	if (rd[now] == 1) {
+		rd[now]--;
+		del[now] = true;
+		for (auto& ch: G[now]) {
+			if (del[ch]) continue;
+			rd[ch]--;
+			if (now == tag) {
+				tag = ch;
+			}
+			topu(ch);
+		}
+	}
+}
+
+void bfs() {
+	queue<int> q;
+	q.push(tag);
+	d[tag] = 0;
+	
+	while (q.size()) {
+		auto now = q.front();
+		vis[now] = true;
+		q.pop();
+		
+		for (auto& ch: G[now]) {
+			if (!vis[ch]) {
+				d[ch] = d[now] + 1;
+				q.push(ch);
+				vis[ch] = true;
+			}
+		}
+	}
+}
+
+void solve() {
+	// 初始化
+	cin >> n >> a >> b; 
+	init();
+	
+	// 建图 
+	for (int i = 1; i <= n; i++) {
+		int u, v;
+		cin >> u >> v;
+		G[u].push_back(v), rd[v]++;
+		G[v].push_back(u), rd[u]++;
+	}
+	
+	// 拓扑删边 & 缩b点
+	tag = b;
+	for (int i = 1; i <= n; i++) {
+		topu(i);
+	}
+
+	// 判断结果 & 计算距离 
+	if (rd[b] == 2 && a != b) {
+		// b点在环上
+		cout << "Yes\n";
+	} else {
+		// b不在环上
+		bfs();
+		cout << (d[a] > d[b] ? "Yes\n" : "No\n");
+	}
+}
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(0);
+	int T = 1;
+	cin >> T;
+	while (T--) solve();
+	return 0;
+}
+```
+
+### 3. 染色法判定二分图
+
+https://www.acwing.com/problem/content/862/
+
+> 题意：给定一个无向图，可能有重边和自环。问是否可以构成二分图。
+>
+> 二分图的定义：一个图可以被分成两个点集，每个点集内部没有边相连（可以不是连通图）
+>
+> 思路：利用**染色法**，遍历每一个连通分量，选择连通分量中的任意一点进行染色扩展
+>
+> - 如果扩展到的点没有染过色，则染成与当前点相对的颜色
+> - 如果扩展到的点已经被染过色了且染的颜色和当前点的颜色相同，则无法构成二分图（奇数环）
+>
+> 时间复杂度：$O(n+e)$
+
+```c++
+const int N = 100010;
+
+int n, m;
+vector<int> G[N], col(N);
+
+bool bfs(int u) {
+	queue<int> q;
+	q.push(u);
+	col[u] = 1;
+
+	while (q.size()) {
+		int now = q.front();
+		q.pop();
+		for (auto& ch: G[now]) {
+			if (!col[ch]) {
+				col[ch] = -col[now];
+				q.push(ch);
+			}
+			else if (col[ch] == col[now]) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+void solve() {
+	cin >> n >> m;
+	while (m--) {
+		int u, v;
+		cin >> u >> v;
+		G[u].push_back(v);
+		G[v].push_back(u);
+	}
+
+	// 遍历每一个连通分量
+	for (int i = 1; i <= n; i++) {
+		if (!col[i]) {
+			bool ok = bfs(i);
+			if (!ok) {
+				cout << "No\n";
+				return;
+			}
+		}
+	}
+
+	cout << "Yes\n";
+}
+```
+
+### 4. Kruskal算法求最小生成树
+
+https://www.acwing.com/problem/content/861/
+
+> 题意：给定一个无向图，可能含有重边和自环。试判断能否求解其中的最小生成树，如果可以给出最小生成树的权值
+>
+> 思路：根据数据量，可以发现顶点数很大，不适用 $Prim$ 算法，只能用 $Kruskal$ 算法，下面简单介绍一下该算法的流程
+>
+> - 自环首先排除 - 显然这条边连接的“两个”顶点是不可能选进 $MST$ 的
+> - 首先将每一个结点看成一个连通分量
+> - 接着按照权值将所有的边升序排序后，依次选择
+>     - 如果选出的这条边的两个顶点不在一个连通分量中，则选择这条边并将两个顶点所在的连通分量合并
+>     - 如果选出的这条边的两个顶点在同一个连通分量中，则不能选择这条边（否则会使得构造的树形成环）
+> - 最后统计选择的边的数量 $num$ 进行判断即可
+>     - $num=n-1$，则可以生成最小生成树
+>     - $num<n-1$，则无法生成最小生成树
+> - 时间复杂度：$O(e\log e)$ - 因为最大的时间开销在对所有的边的权值进行排序上
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int N = 100010;
+
+struct edge {
+	int a, b;
+	int w;
+};
+
+int n, m;
+vector<edge> edges;
+vector<int> p(N);
+
+int Find(int now) {
+	if (p[now] != now) {
+		p[now] = Find(p[now]);
+	}
+	return p[now];
+}
+
+void solve() {
+	cin >> n >> m;
+	for (int i = 1; i <= m; i++) {
+		int a, b, w;
+		cin >> a >> b >> w;
+		if (a == b) {
+			continue;
+		}
+		edges.push_back({a, b, w});
+	}
+
+	// 按照边权升序排序
+	sort(edges.begin(), edges.end(), [&](edge& x, edge& y) {
+		return x.w < y.w;
+	});
+
+	// 选边
+	for (int i = 1; i <= n; i++) {
+		p[i] = i;
+	}
+
+	int res = 0, num = 0;
+
+	for (auto& e: edges) {
+		int pa = Find(e.a), pb = Find(e.b);
+		if (pa != pb) {
+			num++;
+			p[pa] = pb;
+			res += e.w;
+		}
+
+		if (num == n - 1) {
+			break;
+		}
+	}
+
+	// 特判：选出来的边数无法构成一棵树
+	if (num < n - 1) {
+		cout << "impossible\n";
+		return;
+	}
+
+	cout << res << "\n";
+}
+
+signed main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr), cout.tie(nullptr);
+	int T = 1;
+//	cin >> T;
+	while (T--) solve();
+	return 0;
+}
+```
+
+### 5. Prim算法求最小生成树
+
+https://www.acwing.com/problem/content/860/
+
+> 题意：给定一个稠密无向图，有重边和自环。求出最小生成树
+>
+> 思路：根据题目的数据量，可以使用邻接矩阵存储的方法配合 $Prim$ 算法求解最小生成树，下面给出该算法的流程
+>
+> - 首先明确一下变量的定义：
+>     - `g[i][j]` 为无向图的邻接矩阵存储结构
+>     - `MST[i]` 表示 $i$ 号点是否加入了 $MST$ 集合
+>     - `d[i]` 表示 `i` 号点到 $MST$ 集合的最短边长度
+> - 自环不存储，重边只保留最短的一条
+> - 任选一个点到集合 $MST$ 中，并且更新 $d$ 数组
+> - 选择剩余的 $n-1$ 个点，每次选择有以下流程
+>     - 找到最短边，记录最短边长度 $e$ 和相应的在 $U-MST$ 集合中对应的顶点序号 $v$
+>     - 将 $v$ 号点加入 $MST$ 集合，同时根据此时选出的最短边的长度来判断是否存在最小生成树
+>     - 根据 $v$ 号点，更新 $d$ 数组，即更新在集合 $U-MST$ 中的点到 $MST$ 集合中的点的交叉边的最短长度
+> - 时间复杂度：$O(n^2)$
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int N = 510;
+
+int n, m;
+vector<vector<int>> g(N, vector<int>(N, INT_MAX));
+vector<int> d(N, INT_MAX); // d[i]表示i号点到MST集合中的最短边长度
+bool MST[N];
+int res;
+
+void prim() {
+	// 选任意一个点到MST中并更新d数组
+	MST[1] = true;
+	for (int i = 1; i <= n; i++)
+		if (!MST[i])
+			d[i] = min(d[i], g[i][1]);
+
+	// 选剩下的n-1个点到MST中
+	for (int i = 2; i <= n; i++) {
+		// 1. 找到最短边
+		int e = INT_MAX, v = -1; // e: 最短边长度，v: 最短边不在MST集合中的顶点
+		for (int j = 1; j <= n; j++)
+			if (!MST[j] && d[j] < e)
+				e = d[j], v = j;
+
+		// 2. 加入MST集合
+		MST[v] = true;
+		if (e == INT_MAX) {
+			// 特判无法构造MST的情况
+			cout << "impossible\n";
+			return;
+		} else {
+			res += e;
+		}
+
+		// 3. 更新交叉边 - 迭代（覆盖更新）
+		for (int j = 1; j <= n; j++)
+			if (!MST[j])
+				d[j] = min(d[j], g[j][v]);
+	}
+
+	cout << res << "\n";
+}
+
+void solve() {
+	cin >> n >> m;
+	while (m--) {
+		int a, b, w;
+		cin >> a >> b >> w;
+
+		if (a == b) {
+			continue;
+		}
+
+		if (g[a][b] == INT_MAX) {
+			g[a][b] = w;
+			g[b][a] = w;
+		} else {
+			g[a][b] = min(g[a][b], w);
+			g[b][a] = min(g[b][a], w);
+		}
+	}
+
+	prim();
+}
+
+signed main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr), cout.tie(nullptr);
+	int T = 1;
+//	cin >> T;
+	while (T--) solve();
+	return 0;
+}
 ```
 
 ## 思维题
@@ -2974,13 +3641,55 @@ void solve() {
 }
 ```
 
+# 二、模板
 
+## 高精度
 
+```c++
+class Int : public std::vector<int> {
+public:
+	Int(int n = 0) {
+		push_back(n);
+		check();
+	}
 
+	Int& check() {
+		for (int i = 1; i < size(); ++i) {
+			(*this)[i] += (*this)[i - 1] / 10;
+			(*this)[i - 1] %= 10;
+		}
+		while (back() >= 10) {
+			push_back(back() / 10);
+			(*this)[size() - 2] %= 10;
+		}
+		return *this;
+	}
 
+	friend std::istream& operator>>(std::istream& in, Int& n) {
+		std::string s;
+		in >> s;
+		n.clear();
+		for (int i = s.size() - 1; i >= 0; --i) n.push_back(s[i] - '0');
+		return in;
+	}
 
+	friend std::ostream& operator<<(std::ostream& out, const Int& n) {
+		if (n.empty()) out << 0;
+		for (int i = n.size() - 1; i >= 0; --i) out << n[i];
+		return out;
+	}
 
+	friend Int& operator+=(Int& a, const Int& b) {
+		if (a.size() < b.size()) a.resize(b.size());
+		for (int i = 0; i != b.size(); ++i) a[i] += b[i];
+		return a.check();
+	}
 
+	friend Int operator+(Int a, const Int& b) {
+		return a += b;
+	}
+};
+```
 
 
 
@@ -3080,3 +3789,6 @@ void solve() {
 
 
 
+
+
+​	

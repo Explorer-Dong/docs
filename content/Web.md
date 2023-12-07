@@ -566,7 +566,7 @@ CentOS、Ubuntu和Deepin都是不同的Linux发行版本
 - LNMP是一组Linux操作系统下的Nginx、MySQL、PHP和Perl的组合安装包，常用于构建高性能的Web服务器。通过使用LNMP，可以快速搭建一个功能强大的网站系统
 - LAMP是指Linux、Apache、MySQL和PHP的组合，它是一个开源的Web开发平台。这个组合通常被用来构建高性能的Web应用程序
 
-### 4.1.10 关于bt面板安装所需环境耗费的时间
+### 4.1.10 关于bt面板安装环境耗费的时间
 
 <img src="https://s2.loli.net/2023/08/27/Qf4eCdbNDRjJBgs.png" alt="image-20230826190642441" style="zoom:67%;" />
 
@@ -616,4 +616,3 @@ HOME_URL="https://www.aliyun.com/"						发行版的官方网站链接
 ## 5.1 什么是Node.js
 
 Node.js是一个基于 Chrome V8 引擎的 JavaScript 运行环境
-
