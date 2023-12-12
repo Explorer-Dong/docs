@@ -1129,6 +1129,290 @@ signed main() {
 }
 ```
 
+### 9. [NOIP2002 普及组] 选数
+
+https://www.luogu.com.cn/problem/P1036
+
+> 题意：给定n个数，从中选出k个数，问一共有多少种方案可以使得选出来的k个数之和为质数
+>
+> 思路一：dfs+剪枝
+>
+> - 按照数据量可以直接暴搜，搜索依据是每一个数有两种状态，即选和不选，于是搜索树就是一棵二叉树
+> - 搜索状态定义为：对于当前第idx个数，已经选择了cnt个数，已经选择的数之和为sum
+> - 搜索终止条件为：idx越界
+> - 剪枝：已经选择了k个数就直接返回，不用再选剩下的数了
+> - 时间复杂度：$O(2^n)$ - 剪枝后一定是小于这个复杂度的
+>
+> 思路二：二进制枚举
+>
+> - 直接枚举 $0\to 2^n-1$，按照其中含有的 $1$ 的个数，来进行选数判断
+> - 时间复杂度：$O(2^n)$ - 一定会跑满的
+
+dfs+剪枝
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int N = 30;
+
+int n, k, a[N];
+int res;
+
+bool isPrime(int x) {
+	if (x < 2) return false;
+	for (int i = 2; i <= x / i; i++)
+		if (x % i == 0)
+			return false;
+	return true;
+}
+
+/**
+ * @param cnt 当前已经选择的数的数量
+ * @param idx 当前数的下标
+ * @param sum 当前选数状态下的总和
+ */
+void dfs(int cnt, int idx, int sum) {
+	if (idx > n) return;
+
+	if (cnt == k) {
+		if (isPrime(sum)) res++;
+		return;
+	}
+
+	dfs(cnt, idx + 1, sum);
+	dfs(cnt + 1, idx + 1, sum + a[idx + 1]);
+}
+
+void solve() {
+	cin >> n >> k;
+	for (int i = 1; i <= n; i++)
+		cin >> a[i];
+
+	dfs(0, 1, 0);		// 不选第一个数
+	dfs(1, 1, a[1]);	// 选第一个数
+
+	cout << res << "\n";
+}
+
+signed main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr), cout.tie(nullptr);
+	int T = 1;
+//	cin >> T;
+	while (T--) solve();
+	return 0;
+}
+```
+
+二进制枚举
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int N = 30;
+
+int n, k, a[N];
+int res;
+
+bool isPrime(int x) {
+	if (x < 2) return false;
+	for (int i = 2; i <= x / i; i++)
+		if (x % i == 0)
+			return false;
+	return true;
+}
+
+void solve() {
+	cin >> n >> k;
+	for (int i = 1; i <= n; i++)
+		cin >> a[i];
+
+	for (int i = 0; i < (1 << n); i++) {
+		int cnt = 0, sum = 0;
+		for (int j = 0; j < n; j++)
+			if (i & (1 << j))
+				cnt++, sum += a[j + 1];
+
+		if (cnt != k) continue;
+
+		if (isPrime(sum)) res++;
+	}
+
+	cout << res << "\n";
+}
+
+signed main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr), cout.tie(nullptr);
+	int T = 1;
+//	cin >> T;
+	while (T--) solve();
+	return 0;
+}
+```
+
+### 10. 01迷宫
+
+https://www.luogu.com.cn/problem/P1141
+
+> 题意：给定一个01矩阵，行走规则为“可以走到相邻的数字不同的位置”，现在给定m次询问 `(u,v)`，输出从 `(u,v)` 开始最多可以走多少个位置？
+>
+> 思路：我们可以将此问题转化为一个求解连通块的问题。对于矩阵中的一个连通块，我们定义为：在其中任意一个位置开始行走，都可以走过整个连通块每一个位置。那么在询问时，只需要输出所在连通块元素的个数即可。现在将问题转化为了
+>
+> 1. 如何遍历每一个连通块？
+>
+>     按照标记数组的情况，如果一个位置没有被标记，就从这个位置出发开始打标记并统计
+>
+> 2. 如何统计每一个连通块中元素的个数？
+>
+>     按照题目中给定的迷宫行走规则，可以通过bfs或者dfs实现遍历
+
+bfs代码
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 1010;
+
+int n, m, res[N][N];
+char g[N][N];
+bool vis[N][N];
+
+void bfs(int u, int v) {
+	queue<pair<int, int>> q;
+	int cnt = 0; // 当前“连通块”的大小
+	vector<pair<int, int>> a;
+
+	q.push({u, v});
+	a.push_back({u, v});
+	vis[u][v] = true;
+	cnt++;
+
+	int dx[4] = {-1, 1, 0, 0}, dy[4] = {0, 0, 1, -1};
+
+	while (q.size()) {
+		auto& now = q.front();
+		q.pop();
+
+		for (int i = 0; i < 4; i++) {
+			int x = dx[i] + now.first, y = dy[i] + now.second;
+			if (x >= 1 && x <= n && y >= 1 && y <= n && !vis[x][y] && g[x][y] != g[now.first][now.second]) {
+				q.push({x, y});
+				a.push_back({x, y});
+				vis[x][y] = true;
+				cnt++;
+			}
+		}
+	}
+
+	for (auto& loc: a) {
+		res[loc.first][loc.second] = cnt;
+	}
+}
+
+void solve() {
+	cin >> n >> m;
+	for (int i = 1; i <= n; i++)
+		for (int j = 1; j <= n; j++)
+			cin >> g[i][j];
+
+	for (int i = 1; i <= n; i++)
+		for (int j = 1; j <= n; j++)
+			if (!vis[i][j])
+				bfs(i, j);
+
+	while (m--) {
+		int a, b;
+		cin >> a >> b;
+		if (vis[a][b]) {
+			cout << res[a][b] << "\n";
+		} else {
+			cout << 1 << "\n";
+		}
+	}
+}
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr), cout.tie(nullptr);
+	int T = 1;
+//	cin >> T;
+	while (T--) solve();
+	return 0;
+}
+```
+
+dfs代码
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 1010;
+
+int n, m, res[N][N];
+char g[N][N];
+bool vis[N][N];
+
+// 当前点的坐标 (u, v)，当前连通块的元素个数cnt，当前连通块的元素存到 a 数组
+void dfs(int u, int v, int& cnt, vector<pair<int, int>>& a) {
+	cnt++;
+	a.push_back({u, v});
+	vis[u][v] = true;
+
+	int dx[4] = {0, 0, 1, -1}, dy[4] = {1, -1, 0, 0};
+
+	for (int k = 0; k < 4; k++) {
+		int x = u + dx[k], y = v + dy[k];
+		if (x >= 1 && x <= n && y >= 1 && y <= n && !vis[x][y] && g[x][y] != g[u][v]) {
+			dfs(x, y, cnt, a);
+		}
+	}
+}
+
+void solve() {
+	cin >> n >> m;
+	for (int i = 1; i <= n; i++)
+		for (int j = 1; j <= n; j++)
+			cin >> g[i][j];
+
+	for (int i = 1; i <= n; i++)
+		for (int j = 1; j <= n; j++)
+			if (!vis[i][j]) {
+				int cnt = 0;
+				vector<pair<int, int>> a;
+				dfs(i, j, cnt, a);
+				for (auto& loc: a) {
+					res[loc.first][loc.second] = cnt;
+				}
+			}
+
+	while (m--) {
+		int a, b;
+		cin >> a >> b;
+		if (vis[a][b]) {
+			cout << res[a][b] << "\n";
+		} else {
+			cout << 1 << "\n";
+		}
+	}
+}
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr), cout.tie(nullptr);
+	int T = 1;
+//	cin >> T;
+	while (T--) solve();
+	return 0;
+}
+```
+
 ## dp
 
 ### 1. 对称山脉

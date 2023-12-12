@@ -621,7 +621,7 @@ Node.js是一个基于 Chrome V8 引擎的 JavaScript 运行环境
 
 ## 6.1 远程连接服务器
 
-利用阿里云自带的服务器连接入口，远程连接服务器
+方法一：利用阿里云自带的服务器连接入口，远程连接服务器
 
 ```bash
 [root@DwjDemo1 ~]# cat /etc/os-release
@@ -637,31 +637,19 @@ ANSI_COLOR="0;31"										ANSI终端输出的颜色: "0;31"，通常用于表�
 HOME_URL="https://www.aliyun.com/"						发行版的官方网站链接
 ```
 
----
-
-## 6.2 环境配置
-
-在服务器中安装pip3
+方法二：使用MobaXterm端口连接工具并更新全局软件
 
 ```bash
-yum install -y python3-pip
+yum update
 ```
 
-检查所需py模块
+## 6.2 配置MySQL
 
-```bash
-pip3 freeze >requirements.txt
-```
+- 放通端口3306
 
----
+- 安装mysql - [Linux安装mysql8.0（官方教程！）](https://blog.csdn.net/weixin_55914667/article/details/126410095)
 
-## 6.3 数据库配置
-
-在服务器和bt面板中同时放通mysql专属端口：3306 ？（为什么bt面板还有一个安全组？？？）
-
-在服务器中安装mysql（可以通过bt面板）
-
-修改mysql登录密码（可以通过bt面板）
+- 设置mysql登录密码
 
 在服务器中连接mysql
 
@@ -742,4 +730,332 @@ SSL: yes
 
 ---
 
-​	
+## 6.3 配置Nginx
+
+- 放通80端口
+
+参考：https://blog.csdn.net/qq_45752401/article/details/122660965
+
+1. 进入[nginx官网](http://nginx.org/en/download.html)并下载稳定版：<img src="C:/Users/%E8%91%A3%E6%96%87%E6%9D%B0/AppData/Roaming/Typora/typora-user-images/image-20231208234403083.png" alt="image-20231208234403083" style="zoom: 50%;" />
+
+2. 上传服务器（直接通过mobaxterm拖拽）
+
+3. 解压到当前目录下并进入nginx文件夹
+
+    ```bash
+    tar -zxvf nginx-1.24.0.tar.gz
+    cd "/home/nginx-1.24.0/"
+    ```
+
+4. 配置nginx
+
+    ```bash
+    #配置configure --prefix 代表安装的路径，--with-http_ssl_module 安装ssl，--with-http_stub_status_module查看nginx的客户端状态
+    ./configure --prefix=/usr/local/nginx-1.24.0 --with-http_ssl_module --with-http_stub_status_module
+    ```
+
+    部分结果如图：<img src="C:/Users/%E8%91%A3%E6%96%87%E6%9D%B0/AppData/Roaming/Typora/typora-user-images/image-20231208234944571.png" alt="image-20231208234944571" style="zoom: 67%;" />
+
+5. 编译安装
+
+    以下命令无法安装成功
+
+    ```bash
+    make & make install
+    ```
+
+    安装失败部分结果如图：<img src="C:/Users/%E8%91%A3%E6%96%87%E6%9D%B0/AppData/Roaming/Typora/typora-user-images/image-20231208235314276.png" alt="image-20231208235314276" style="zoom:50%;" />
+
+    以下命令才可以
+
+    ```bash
+    make && make install
+    ```
+
+    安装成功部分结果：<img src="C:/Users/%E8%91%A3%E6%96%87%E6%9D%B0/AppData/Roaming/Typora/typora-user-images/image-20231209000930775.png" alt="image-20231209000930775" style="zoom:50%;" />
+
+6. 启动nginx
+
+    进入sbin目录，输入
+
+    ```bash
+    ./nginx
+    ```
+
+    - 遇到问题：
+
+        <img src="C:/Users/%E8%91%A3%E6%96%87%E6%9D%B0/AppData/Roaming/Typora/typora-user-images/image-20231209001749320.png" alt="image-20231209001749320" style="zoom:67%;" />
+
+    - 原因：nginx重复重启导致自己占用了端口。（一般可能是因为自己设置了开机自动启动，或者重复启动）
+
+    - 解决方案：`killall -9 nginx` 杀掉nginx 的进程  然后重启
+
+    然后浏览器通过http的80端口访问公网ip，就可以看到欢呼雀跃的一幕
+
+    <img src="C:/Users/%E8%91%A3%E6%96%87%E6%9D%B0/AppData/Roaming/Typora/typora-user-images/image-20231209001703919.png" alt="image-20231209001703919" style="zoom: 50%;" />
+
+## 6.4 安装python
+
+参考：[linux安装python](https://blog.csdn.net/weixin_64940494/article/details/126266917)
+
+命令集合
+
+```bash
+# 安装python依赖
+If you want a release build with all stable optimizations active (PGO, etc),please run ./configure --enable-optimizations
+
+# 本地下载拖拽上传至服务器，解压安装包
+tar -xvf Python-3.11.5.tgz
+
+# 进入安装包，配置安装路径
+cd Python-3.10.6
+./configure --prefix=/usr/local/python311
+
+# 编译安装
+make && make install
+
+# 将最新的python创建软链链接
+ln -s /usr/local/python311/bin/python3.11 /usr/bin/python311
+
+# 修改yum依赖默认的python版本
+vi /usr/libexec/urlgrabber-ext-down
+vi /usr/bin/yum
+
+# 修改防火墙
+vi /usr/bin/firewall-cmd
+vi /usr/sbin/firewalld
+
+# 创建pip软连接
+ln -s /usr/local/python311/bin/pip3.11 /usr/bin/pip311
+```
+
+进入vim的编辑指令
+
+```bash
+# 进入编辑模式
+i
+
+# 退出编辑模式进入命令模式
+Esc
+
+# 保存并关闭文件
+:w
+
+# 退出vim编辑模式
+:q
+```
+
+## 6.5 配置python
+
+安装python虚拟环境管理依赖
+
+```bash
+pip install virtualenvwrapper
+```
+
+配置虚拟环境
+
+```bash
+# 在根目录下进入.bashrc文件进行编辑
+vi .bashrc
+i
+
+# ctrl+f进入末尾，粘贴一下文字，保存并退出
+export WORKON_HOME=$HOME/.virtualenvs
+VIRTUALENVWRAPPER_PYTHON=/usr/bin/python311
+source /usr/local/bin/virtualenvwrapper.sh
+
+# 刷新配置文件
+source ~/.bashrc
+```
+
+- 刷新配置文件时报错
+
+    ```bash
+    virtualenvwrapper.sh: There was a problem running the initialization hooks.
+    ```
+
+- 解决方案参考：[reference](https://www.cnblogs.com/cpl9412290130/p/10019231.html)
+
+
+## 6.6 项目相关
+
+### 6.6.1 创建py虚拟环境
+
+创建虚拟py环境
+
+```bash
+mkvirtualenv --python=/usr/bin/python311 <EnvName>
+```
+
+启动虚拟环境
+
+```bash
+workon <EnvName>
+```
+
+退出虚拟环境
+
+```bash
+deactivate
+```
+
+### 6.6.2 Git管理
+
+进入python虚拟环境目录\<EnvName>，拉取远程源文件
+
+```bash
+git clone https://github.com/Explorer-Dong/YunJinWeb.git
+```
+
+### 6.6.3 配置运行flask应用
+
+检查本项目所需py模块
+
+```bash
+pip freeze >requirements.txt
+```
+
+安装所需py模块
+
+```bash
+pip install -r requirements.txt
+```
+
+运行flask应用
+
+- **内测阶段**，使用flask自带的服务器运行
+
+    运行flask主接口文件 `app.py`
+
+    ```bash
+    python app.py
+    ```
+
+    > 运行app.py时报错，端口已被占用，解决方案：
+
+    - 方法一：换一个端口
+
+    - [方法二：](https://blog.csdn.net/weixin_45753080/article/details/124114096)杀死其余的端口占用进程，重启应用
+
+        ```bash
+        # 检测端口占用 
+        netstat -npl | grep "端口"
+        
+        # 查找占用端口的进程的PID
+        sudo lsof -i:"端口"
+        
+        # 根据PID杀死该进程
+        sudo kill -9 <PID>
+        ```
+
+- **公测阶段**，使用uwsgi应用服务器运行
+
+    安装并配置uwsgi应用服务器
+
+    - 安装uwsgi包
+
+        ```bash
+        pip install uwsgi
+        ```
+
+    - 创建uwsgi.ini文件并编辑
+
+        ```bash
+        touch uwsgi.ini
+        ```
+
+        ```bash
+        [uwsgi]
+        
+        # -------------------- 路径相关的设置 --------------------
+        
+        # 项目的路径
+        chdir           = /root/.virtualenvs/test111/demo/
+        
+        # Flask的uwsgi文件配对的应用
+        wsgi-file       = /root/.virtualenvs/test111/demo/app.py
+        
+        # 回调的app对象
+        callable        = app
+        
+        # Python虚拟环境的路径
+        home            = /root/.virtualenvs/test111
+        
+        # -------------------- 进程相关的设置 --------------------
+        
+        # 主进程
+        master          = true
+        
+        # 最大数量的工作进程
+        processes       = 10
+        
+        # 监听5000端口（或监听socket文件，与nginx配合）
+        http            = :5000 
+        
+        # socket监听
+        # socket        = /srv/[项目名称]/[项目名称].sock
+        
+        # 设置socket的权限
+        # chmod-socket    = 666
+        
+        # 退出的时候是否清理环境
+        vacuum          = true
+        ```
+
+    - 通过uwsgi应用服务器运行flask应用
+
+        [uwsgi启动flask项目(venv虚拟环境) ](https://www.cnblogs.com/pengpengdeyuan/p/14742090.html)
+        
+        ```bash
+        # 初始启动uwsgi指令
+        uwsgi --ini uwsgi.ini
+        
+        #uwsgi --ini uwsgi.ini             # 启动
+        #uwsgi --reload uwsgi.pid          # 重启
+        #uwsgi --stop uwsgi.pid            # 关闭
+        ```
+
+    - [退出uwsgi但是不停止服务的操作](https://blog.csdn.net/wjwj1203/article/details/105336943)
+
+        ```bash
+        # 退出uwsgi但是不停止服务的操作
+        uwsgi -d --ini uwsgi.ini
+        
+        # 此时想要停止就需要找到uwsgi的进程并全部杀死
+        	# 找到所有uwsgi进程
+        	ps -ef|grep uwsgi
+        	
+        	# 杀死所有进程
+        	kill -9 <进程号>
+        ```
+
+### 6.6.4 一些bug
+
+==读取json时出现问题==
+
+> # UnicodeDecodeError
+>
+> UnicodeDecodeError: 'utf-8' codec can't decode byte 0xc3 in position 39: invalid continuation byte
+
+原因：对string解码时出现错误
+
+解决：
+
+- 将app.py中的
+
+    ```python
+    with open('static/json/image_text.json', 'r') as f:
+    	image_text = json.load(f)
+    ```
+
+    改为
+
+    ```python
+    with open('static/json/image_text.json', 'r', encoding='gbk') as f:
+    	image_text = json.load(f)
+    ```
+
+参考：https://bobbyhadz.com/blog/python-unicodedecodeerror-utf-8-codec-cant-decode-byte
+
+==qa==
