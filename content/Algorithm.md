@@ -3599,6 +3599,89 @@ signed main() {
 }
 ```
 
+### 6. Dijkstra求最短路 I
+
+https://www.acwing.com/problem/content/851/
+
+> 题意：给定一个无向图，可能存在重边与自环，问1号点到n号点的最短路径长度是多少，1到n没有通路就输出-1
+>
+> 思路：
+>
+> - 存储：根据数据量，即点少边多的稠密图，我们采用邻接矩阵的方式存储图
+> - 求解：我们定义 d[i] 数组表示源点到 i 号点的最短距离。先将源点放入 SPT 集合，然后更新所有 V-SPT 中的点到 SPT 集合的最短路径长度。接着循环 n-1 次迭代更新剩余的 n-1 个点，最终的 d[end] 就是答案。
+> - 总结：算法整体采用贪心与动态规划的思路，与 Prim 算法仔细比对可知，其中的贪心过程几乎一致，而动态规划的过程体现在在求解出集合 V-SPT 中到集合 STP 最短距离的点 vex 之后，利用该点对其余在 V-SPT 中的点更新 d[j] 的过程。更新前的状态都是在之前的子结构下的最优解，因此更新就是基于动态规划进行的。（此处仔细体悟）
+>
+> 时间复杂度：$O(n^2)$
+
+```c++
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int N = 510, INF = 0x3f3f3f3f;
+
+int n, m;
+int g[N][N];
+
+int dijkstra(int start, int end) {
+	vector<int> d(n + 1, INF);
+	vector<bool> SPT(n + 1, false);
+
+	d[start] = 0;
+
+	/* 1. 将起点加入SPT集合 */
+	SPT[start] = true;
+	for (int j = 1; j <= n; j++)
+		if (!SPT[j])
+			d[j] = min(d[j], d[start] + g[start][j]);
+
+	/* 2. 选择到起点最近的点(greedy)，更新到起点最近的点(dp) */
+	for (int i = 1; i <= n - 1; i++) {
+		// 找到V-SPT中到起点最近的点vex
+		int vex = -1;
+		for (int j = 1; j <= n; j++)
+			if (!SPT[j] && (vex == -1 || d[j] < d[vex]))
+				vex = j;
+
+		// 将vex加入SPT
+		SPT[vex] = true;
+
+		// 更新所有V-SPT中的点到起点的最短距离
+		for (int j = 1; j <= n; j++)
+			if (!SPT[j])
+				d[j] = min(d[j], d[vex] + g[vex][j]);
+	}
+
+	return d[end] == INF ? -1 : d[end];
+}
+
+void solve() {
+	cin >> n >> m;
+
+	for (int i = 1; i <= n; i++)
+		for (int j = 1; j <= n; j++)
+			g[i][j] = i == j ? 0 : INF;
+
+	while (m--) {
+		int u, v, w;
+		cin >> u >> v >> w;
+		g[u][v] = min(g[u][v], w);
+//		g[v][u] = min(g[v][u], w);
+	}
+
+	cout << dijkstra(1, n) << "\n";
+}
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr), cout.tie(nullptr);
+	int T = 1;
+//	cin >> T;
+	while (T--) solve();
+	return 0;
+}
+```
+
 ## 思维题
 
 ### 1. 最长严格递增子序列

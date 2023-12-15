@@ -469,10 +469,6 @@ def search():
 ```
 5. 运行Flask应用，访问`http://localhost:5000/search?query=关键词`进行搜索。
 
-
-
-
-
 ## 3.2 MySQL
 
 ### 检查FLask是否连接到了mysql数据库
@@ -509,34 +505,30 @@ if __name__ == "__main__":
 
 # 4、服务器
 
-## 4.1 笔记
+## 4.1 相关概念
 
 ### 4.1.1 云服务器与实例
 
 一个云服务器相当于一个抽象类的类，在其中购买配置了指定的实例后相当于实例化一个类，从而一个云服务器对应一个实例
 
-### 4.1.2 单服务器+单域名=多网站
+### 4.1.2 单服务器+一级域名=多网站
 
-一台云服务器可以【通过添加多个文件夹】挂载多个网站，像这样
 
-![image-20230826011328462](https://s2.loli.net/2023/08/27/fwd8NXg2hDPvLsK.png)
-
-而多个网站又可以【通过不同的主机记录值】只依赖一个主域名，像这样
-
-<img src="https://s2.loli.net/2023/08/27/odjR69UYpuwLOG4.png" alt="image-20230826011106105" style="zoom:50%;" />
-
-从而实现了【一台云服务器 + 一个域名 = 多功能网站】
 
 ### 4.1.3 关于域名解析延时与80端口
 
 在给购买好的域名进行解析的时候，即指向自己服务器的公网IP的时候，可能会有一段时间的延时。但其实可能是没有给云服务器放通80端口导致的
 
-### 4.1.4 关于SSL证书
+### 4.1.4 关于备案
+
+当前的形式是，对于指向中国大陆ip（一台服务器对应一个ip）的域名需要备案，如果指向的是非中国大陆的ip，则域名就不需要备案了
+
+### 4.1.5 关于SSL证书
 
 - http协议默认使用的是80端口，
 - 而申请了SSL证书后，通过https协议访问的网站默认使用的是443端口，因此需要提前在实例的**安全组**中，放通443端口
 
-### 4.1.5 关于SSL证书的签发
+### 4.1.6 关于SSL证书的签发
 
 - 如果是基于bt面板操作的话。可以通过ssl选项中“Let's Encrypt”的选项免费申请三个月的用量
 
@@ -544,7 +536,7 @@ if __name__ == "__main__":
 
 - 由于是基于bt面板管理，需要打开**强制通过https进入**这个选项，从而直接默认使用https协议访问网站
 
-### 4.1.6 关于SSL证书的部署
+### 4.1.7 关于SSL证书的部署
 
 获得已签发的ssl证书后，下载下来，再通过bt面板进行部署
 
@@ -553,75 +545,50 @@ if __name__ == "__main__":
 
 ![image-20230826104235878](https://s2.loli.net/2023/08/27/qnCeXZwEHIh35fd.png)
 
-### 4.1.7 关于Linux的发行版本
-
-CentOS、Ubuntu和Deepin都是不同的Linux发行版本
-
-### 4.1.8 遇上实例无法远程连接服务器的情况
-
-直接停止实例，用快照备份一下，重装操作系统，配置一样即可
-
-### 4.1.9 关于LNMP和LAMP
+### 4.1.8 关于LNMP和LAMP
 
 - LNMP是一组Linux操作系统下的Nginx、MySQL、PHP和Perl的组合安装包，常用于构建高性能的Web服务器。通过使用LNMP，可以快速搭建一个功能强大的网站系统
 - LAMP是指Linux、Apache、MySQL和PHP的组合，它是一个开源的Web开发平台。这个组合通常被用来构建高性能的Web应用程序
 
-### 4.1.10 关于bt面板安装环境耗费的时间
+### 4.1.9 关于bt面板
+
+简介：其实就是一个类windows的linux环境下的可视化管理工具
+
+安装：服务器安装宝塔面板，基于不同的linux系统会有不同的指令，详情见[宝塔面板安装地址](https://www.bt.cn/new/download.html)，选择相应的指令进行安装即可
+
+进入：通过bt指令进入服务器可视化管理界面
+
+<img src="https://s2.loli.net/2023/12/15/l54bNxPO1fhGqEK.png" alt="image-20231215190014294" style="zoom:50%;" />
+
+管理：安装网站运行所需的环境，耗时如下：
 
 <img src="https://s2.loli.net/2023/08/27/Qf4eCdbNDRjJBgs.png" alt="image-20230826190642441" style="zoom:67%;" />
 
-### 4.1.11 备案
+## 4.2 单服务器+单一级域名=多网站
 
-需要材料
+参考：[通过Nginx在一台服务器部署多个Web应用](https://blog.csdn.net/qq_38431321/article/details/123018259)
 
-### 4.1.12 二级域名与子域名
+### 4.2.1 创建多个二级域名
 
-二级域名就比如“dwj601.com.cn”域名结构中，“.com”此时是置于国家顶级域名“.cn”下的二级域名
+>  多个网站可以通过**二级域名**的形式只依赖一个**一级域名**，从而实现一个域名衍生出多个子域名的形式，即一级域名为 `baidu.com`，二级域名为 `mcn.baidu.com`、`career.baidu.com` 等等
 
-子域名就比如“docs.dwj601.cn”、“www.dwj601.cn”就是“dwj601.cn”的子域名
+### 4.2.2 解析二级域名绑定到服务器上
 
-## 4.2 我的服务器 Dwjdemo1
+> 每一个**二级域名**都需要解析到相应的**IP地址**，即**主机记录**对应**记录值**，才能进行后续的访问。其实可以理解为，将不同的二级域名都绑定到当前的服务器上，像这样：
+>
+> <img src="https://s2.loli.net/2023/08/27/odjR69UYpuwLOG4.png" alt="image-20230826011106105" style="zoom:50%;" />
 
-### 4.2.1 服务器配置
+### 4.2.3 理解二级域名的访问
 
-- 操作系统：Alibaba Cloud Linux 3.2104 LTS 64位
+> 我们通过不同的二级域名访问网站时，其实就是访问不同的文件夹中的文件信息，像这样：
+>
+> ![image-20230826011328462](https://s2.loli.net/2023/08/27/fwd8NXg2hDPvLsK.png)
 
-- 运行内存：1核2G
+# 5、部署flask
 
-- 系统内存：40G
+## 5.1 远程连接服务器
 
-### 4.2.2 服务器信息
-
-```bash
-[root@DwjDemo1 ~]# cat /etc/os-release
-
-NAME="Alibaba Cloud Linux"								发行版的名称
-VERSION="3 (Soaring Falcon)"							发行版的版本号
-ID="alinux"												唯一的标识符
-ID_LIKE="rhel fedora centos anolis"						一些类似的发行版
-VERSION_ID="3"											发行版的版本编号
-PLATFORM_ID="platform:al8"								平台的标识符
-PRETTY_NAME="Alibaba Cloud Linux 3 (Soaring Falcon)"	可读的发行版名称和版本号
-ANSI_COLOR="0;31"										ANSI终端输出的颜色: "0;31"，通常用于表示错误或警告信息
-HOME_URL="https://www.aliyun.com/"						发行版的官方网站链接
-```
-
-### 4.2.3 BT面板登录
-
-- username: dwjadmin
-- password: dwjadmin
-
-# 5、Docsify
-
-## 5.1 什么是Node.js
-
-Node.js是一个基于 Chrome V8 引擎的 JavaScript 运行环境
-
-# 6、部署flask
-
-## 6.1 远程连接服务器
-
-方法一：利用阿里云自带的服务器连接入口，远程连接服务器
+服务器信息
 
 ```bash
 [root@DwjDemo1 ~]# cat /etc/os-release
@@ -637,19 +604,31 @@ ANSI_COLOR="0;31"										ANSI终端输出的颜色: "0;31"，通常用于表�
 HOME_URL="https://www.aliyun.com/"						发行版的官方网站链接
 ```
 
-方法二：使用MobaXterm端口连接工具并更新全局软件
+连接方法
 
-```bash
-yum update
-```
+- 方法一：利用阿里云自带的服务器连接入口，远程连接服务器
 
-## 6.2 配置MySQL
+- 方法二：使用MobaXterm端口连接工具并更新全局软件
 
-- 放通端口3306
+    ```bash
+    yum update
+    ```
 
-- 安装mysql - [Linux安装mysql8.0（官方教程！）](https://blog.csdn.net/weixin_55914667/article/details/126410095)
+- 输入 username 和 password
 
-- 设置mysql登录密码
+## 5.2 配置MySQL
+
+### 5.2.1 放通端口
+
+服务器放通端口3306
+
+### 5.2.2 安装MySQL并启动
+
+参考：[Linux安装mysql8.0（官方教程！）](https://blog.csdn.net/weixin_55914667/article/details/126410095)
+
+### 5.2.3 配置MySQL
+
+设置mysql登录密码
 
 在服务器中连接mysql
 
@@ -685,6 +664,8 @@ update user set host = '%' where user = 'root';
 FLUSH PRIVILEGES;
 ```
 
+### 5.2.4 更改config.py
+
 修改项目中 `config.py` 中的配置信息
 
 ```python
@@ -708,93 +689,72 @@ DB_URI = 'mysql+pymysql://{}:{}@{}:{}/{}?charset=utf8mb4'.format(USERNAME, PASSW
 SQLALCHEMY_DATABASE_URI = DB_URI
 ```
 
-本地连接远程数据库
+### 5.2.5 本地连接远程数据库
 
 <img src="https://s2.loli.net/2023/12/07/ocUCG1N3PBEH6m2.png" alt="image-20231207232537233" style="zoom:50%;" />
 
 <img src="https://s2.loli.net/2023/12/07/tg3WfE2r1pF8kIU.png" alt="image-20231207232615304" style="zoom:50%;" />
 
-```bash
-DBMS: MySQL (ver. 5.7.43-log)
-Case sensitivity: plain=exact, delimited=exact
-Driver: MySQL Connector/J (ver. mysql-connector-java-8.0.25 (Revision:), JDBC4.2)
-Ping: 405 ms
-SSL: yes
-```
+### 5.2.6 本地构造数据库信息
 
-拷贝数据库表
-
-直接在DataGrip中寻找进行复制即可
+拷贝数据库表 - 直接在DataGrip中寻找进行复制即可
 
 <img src="https://s2.loli.net/2023/12/07/inUoMYVPatjzW3Q.png" alt="image-20231207232434015" style="zoom:50%;" />
 
----
+## 5.3 配置Nginx
 
-## 6.3 配置Nginx
+参考：[Linux安装Nginx（超详细步骤）](https://blog.csdn.net/qq_45752401/article/details/122660965)
 
-- 放通80端口
+### 5.3.1 放通端口
 
-参考：https://blog.csdn.net/qq_45752401/article/details/122660965
+服务器放通80端口
 
-1. 进入[nginx官网](http://nginx.org/en/download.html)并下载稳定版：<img src="C:/Users/%E8%91%A3%E6%96%87%E6%9D%B0/AppData/Roaming/Typora/typora-user-images/image-20231208234403083.png" alt="image-20231208234403083" style="zoom: 50%;" />
+### 5.3.2 安装Nginx并启动
 
-2. 上传服务器（直接通过mobaxterm拖拽）
+进入[nginx官网](http://nginx.org/en/download.html)并下载稳定版至本地：<img src="C:/Users/%E8%91%A3%E6%96%87%E6%9D%B0/AppData/Roaming/Typora/typora-user-images/image-20231208234403083.png" alt="image-20231208234403083" style="zoom: 50%;" />
 
-3. 解压到当前目录下并进入nginx文件夹
+上传服务器（直接通过mobaxterm拖拽）并解压到当前目录下并进入nginx文件夹
 
-    ```bash
-    tar -zxvf nginx-1.24.0.tar.gz
-    cd "/home/nginx-1.24.0/"
-    ```
+```bash
+tar -zxvf nginx-1.24.0.tar.gz
+cd "/home/nginx-1.24.0/"
+```
 
-4. 配置nginx
+配置nginx并编译安装
 
-    ```bash
-    #配置configure --prefix 代表安装的路径，--with-http_ssl_module 安装ssl，--with-http_stub_status_module查看nginx的客户端状态
-    ./configure --prefix=/usr/local/nginx-1.24.0 --with-http_ssl_module --with-http_stub_status_module
-    ```
+```bash
+# 配置configure 
+# --prefix 代表安装的路径
+# --with-http_ssl_module 安装ssl
+# --with-http_stub_status_module 查看nginx的客户端状态
+./configure --prefix=/usr/local/nginx-1.24.0 --with-http_ssl_module --with-http_stub_status_module
 
-    部分结果如图：<img src="C:/Users/%E8%91%A3%E6%96%87%E6%9D%B0/AppData/Roaming/Typora/typora-user-images/image-20231208234944571.png" alt="image-20231208234944571" style="zoom: 67%;" />
+# 编译安装
+make && make install
+```
 
-5. 编译安装
+进入sbin目录，启动nginx
 
-    以下命令无法安装成功
+```bash
+# 启动nginx
+./nginx
+```
 
-    ```bash
-    make & make install
-    ```
+> 解决启动遇到的端口占用的问题
+>
+> <img src="https://s2.loli.net/2023/12/15/d6UFwPvxcuqQg4r.png" alt="image-20231209001749320" style="zoom:67%;" />
+>
+> `killall -9 nginx` 杀掉 nginx 的进程，然后重启
+>
+> ---
+>
+> 然后浏览器通过http的80端口访问公网ip，就可以看到欢呼雀跃的一幕
+>
+> <img src="https://s2.loli.net/2023/12/15/q4XJUR9tiKT1xns.png" alt="image-20231209001703919" style="zoom: 50%;" />
 
-    安装失败部分结果如图：<img src="C:/Users/%E8%91%A3%E6%96%87%E6%9D%B0/AppData/Roaming/Typora/typora-user-images/image-20231208235314276.png" alt="image-20231208235314276" style="zoom:50%;" />
+## 5.4 配置python
 
-    以下命令才可以
-
-    ```bash
-    make && make install
-    ```
-
-    安装成功部分结果：<img src="C:/Users/%E8%91%A3%E6%96%87%E6%9D%B0/AppData/Roaming/Typora/typora-user-images/image-20231209000930775.png" alt="image-20231209000930775" style="zoom:50%;" />
-
-6. 启动nginx
-
-    进入sbin目录，输入
-
-    ```bash
-    ./nginx
-    ```
-
-    - 遇到问题：
-
-        <img src="C:/Users/%E8%91%A3%E6%96%87%E6%9D%B0/AppData/Roaming/Typora/typora-user-images/image-20231209001749320.png" alt="image-20231209001749320" style="zoom:67%;" />
-
-    - 原因：nginx重复重启导致自己占用了端口。（一般可能是因为自己设置了开机自动启动，或者重复启动）
-
-    - 解决方案：`killall -9 nginx` 杀掉nginx 的进程  然后重启
-
-    然后浏览器通过http的80端口访问公网ip，就可以看到欢呼雀跃的一幕
-
-    <img src="C:/Users/%E8%91%A3%E6%96%87%E6%9D%B0/AppData/Roaming/Typora/typora-user-images/image-20231209001703919.png" alt="image-20231209001703919" style="zoom: 50%;" />
-
-## 6.4 安装python
+### 5.4.1 安装python
 
 参考：[linux安装python](https://blog.csdn.net/weixin_64940494/article/details/126266917)
 
@@ -829,7 +789,7 @@ vi /usr/sbin/firewalld
 ln -s /usr/local/python311/bin/pip3.11 /usr/bin/pip311
 ```
 
-进入vim的编辑指令
+vim的编辑指令
 
 ```bash
 # 进入编辑模式
@@ -845,7 +805,7 @@ Esc
 :q
 ```
 
-## 6.5 配置python
+### 5.4.2 安装python环境管理包
 
 安装python虚拟环境管理依赖
 
@@ -869,18 +829,14 @@ source /usr/local/bin/virtualenvwrapper.sh
 source ~/.bashrc
 ```
 
-- 刷新配置文件时报错
-
-    ```bash
-    virtualenvwrapper.sh: There was a problem running the initialization hooks.
-    ```
-
-- 解决方案参考：[reference](https://www.cnblogs.com/cpl9412290130/p/10019231.html)
+> 刷新配置文件时报错：`virtualenvwrapper.sh: There was a problem running the initialization hooks.`
+>
+> 解决方案参考：[virtualenvwrapper.sh报错: There was a problem running the initialization hooks.解决](https://www.cnblogs.com/cpl9412290130/p/10019231.html)
 
 
-## 6.6 项目相关
+## 5.5 项目相关
 
-### 6.6.1 创建py虚拟环境
+### 5.5.1 创建py虚拟环境
 
 创建虚拟py环境
 
@@ -900,7 +856,7 @@ workon <EnvName>
 deactivate
 ```
 
-### 6.6.2 Git管理
+### 5.5.2 Git管理
 
 进入python虚拟环境目录\<EnvName>，拉取远程源文件
 
@@ -908,7 +864,7 @@ deactivate
 git clone https://github.com/Explorer-Dong/YunJinWeb.git
 ```
 
-### 6.6.3 配置运行flask应用
+### 5.5.3 配置flask运行环境
 
 检查本项目所需py模块
 
@@ -922,140 +878,229 @@ pip freeze >requirements.txt
 pip install -r requirements.txt
 ```
 
-运行flask应用
+### 5.5.4 运行flask应用
 
-- **内测阶段**，使用flask自带的服务器运行
+#### 5.5.4.1 内测阶段
 
-    运行flask主接口文件 `app.py`
+使用flask自带的服务器运行
+
+运行flask主接口文件 `app.py`
+
+```bash
+python app.py
+```
+
+> 运行app.py时报错，端口已被占用，解决方案：
+>
+> - 方法一：换一个端口运行
+>
+> - [方法二：](https://blog.csdn.net/weixin_45753080/article/details/124114096)杀死其余的端口占用进程，重启应用
+>
+>     ```bash
+>     # 检测端口占用 
+>     netstat -npl | grep "端口"
+>             
+>     # 查找占用端口的进程的PID
+>     sudo lsof -i:"端口"
+>             
+>     # 根据PID杀死该进程
+>     sudo kill -9 <PID>
+>     ```
+
+#### 5.5.4.2 公测阶段
+
+使用uwsgi应用服务器运行
+
+安装并配置uwsgi应用服务器
+
+- 安装uwsgi包
 
     ```bash
-    python app.py
+    pip install uwsgi
     ```
 
-    > 运行app.py时报错，端口已被占用，解决方案：
+- 创建uwsgi.ini文件并编辑
 
-    - 方法一：换一个端口
+    ```bash
+    touch uwsgi.ini
+    ```
 
-    - [方法二：](https://blog.csdn.net/weixin_45753080/article/details/124114096)杀死其余的端口占用进程，重启应用
+    ```bash
+    [uwsgi]
+    
+    # -------------------- 路径相关的设置 --------------------
+    
+    # 项目的路径
+    chdir           = /root/.virtualenvs/test111/demo/
+    
+    # Flask的uwsgi文件配对的应用
+    wsgi-file       = /root/.virtualenvs/test111/demo/app.py
+    
+    # 回调的app对象
+    callable        = app
+    
+    # Python虚拟环境的路径
+    home            = /root/.virtualenvs/test111
+    
+    # -------------------- 进程相关的设置 --------------------
+    
+    # 主进程
+    master          = true
+    
+    # 最大数量的工作进程
+    processes       = 10
+    
+    # 监听5000端口（或监听socket文件，与nginx配合）
+    http            = :5000 
+    
+    # socket监听
+    # socket        = /srv/[项目名称]/[项目名称].sock
+    
+    # 设置socket的权限
+    # chmod-socket    = 666
+    
+    # 退出的时候是否清理环境
+    vacuum          = true
+    ```
 
-        ```bash
-        # 检测端口占用 
-        netstat -npl | grep "端口"
-        
-        # 查找占用端口的进程的PID
-        sudo lsof -i:"端口"
-        
-        # 根据PID杀死该进程
-        sudo kill -9 <PID>
-        ```
+- 通过uwsgi应用服务器运行flask应用
 
-- **公测阶段**，使用uwsgi应用服务器运行
+    [uwsgi启动flask项目(venv虚拟环境) ](https://www.cnblogs.com/pengpengdeyuan/p/14742090.html)
+    
+    ```bash
+    # 初始启动uwsgi指令
+    uwsgi --ini uwsgi.ini
+    ```
+    
+- [退出uwsgi但是不停止服务的操作](https://blog.csdn.net/wjwj1203/article/details/105336943)
 
-    安装并配置uwsgi应用服务器
+    ```bash
+    # 退出uwsgi但是不停止服务的操作
+    uwsgi -d --ini uwsgi.ini
+    
+    # 此时想要停止就需要找到uwsgi的进程并全部杀死
+    	# 找到所有uwsgi进程
+    	ps -ef|grep uwsgi
+    	
+    	# 杀死所有进程
+    	kill -9 <进程号>
+    ```
 
-    - 安装uwsgi包
+### 5.5.4 一些bug
 
-        ```bash
-        pip install uwsgi
-        ```
-
-    - 创建uwsgi.ini文件并编辑
-
-        ```bash
-        touch uwsgi.ini
-        ```
-
-        ```bash
-        [uwsgi]
-        
-        # -------------------- 路径相关的设置 --------------------
-        
-        # 项目的路径
-        chdir           = /root/.virtualenvs/test111/demo/
-        
-        # Flask的uwsgi文件配对的应用
-        wsgi-file       = /root/.virtualenvs/test111/demo/app.py
-        
-        # 回调的app对象
-        callable        = app
-        
-        # Python虚拟环境的路径
-        home            = /root/.virtualenvs/test111
-        
-        # -------------------- 进程相关的设置 --------------------
-        
-        # 主进程
-        master          = true
-        
-        # 最大数量的工作进程
-        processes       = 10
-        
-        # 监听5000端口（或监听socket文件，与nginx配合）
-        http            = :5000 
-        
-        # socket监听
-        # socket        = /srv/[项目名称]/[项目名称].sock
-        
-        # 设置socket的权限
-        # chmod-socket    = 666
-        
-        # 退出的时候是否清理环境
-        vacuum          = true
-        ```
-
-    - 通过uwsgi应用服务器运行flask应用
-
-        [uwsgi启动flask项目(venv虚拟环境) ](https://www.cnblogs.com/pengpengdeyuan/p/14742090.html)
-        
-        ```bash
-        # 初始启动uwsgi指令
-        uwsgi --ini uwsgi.ini
-        
-        #uwsgi --ini uwsgi.ini             # 启动
-        #uwsgi --reload uwsgi.pid          # 重启
-        #uwsgi --stop uwsgi.pid            # 关闭
-        ```
-
-    - [退出uwsgi但是不停止服务的操作](https://blog.csdn.net/wjwj1203/article/details/105336943)
-
-        ```bash
-        # 退出uwsgi但是不停止服务的操作
-        uwsgi -d --ini uwsgi.ini
-        
-        # 此时想要停止就需要找到uwsgi的进程并全部杀死
-        	# 找到所有uwsgi进程
-        	ps -ef|grep uwsgi
-        	
-        	# 杀死所有进程
-        	kill -9 <进程号>
-        ```
-
-### 6.6.4 一些bug
-
-==读取json时出现问题==
+==问题一：读取json时出现问题==
 
 > # UnicodeDecodeError
 >
 > UnicodeDecodeError: 'utf-8' codec can't decode byte 0xc3 in position 39: invalid continuation byte
+>
+> 原因：对string解码时出现错误
+>
+> 解决：
+>
+> > 将app.py中的
+> >
+> > ```python
+> > with open('static/json/image_text.json', 'r') as f:
+> > 	image_text = json.load(f)
+> > ```
+> >
+> > 改为
+> >
+> > ```python
+> > with open('static/json/image_text.json', 'r', encoding='gbk') as f:
+> > 	image_text = json.load(f)
+> > ```
+>
+> 参考：https://bobbyhadz.com/blog/python-unicodedecodeerror-utf-8-codec-cant-decode-byte
 
-原因：对string解码时出现错误
+==问题二：==
 
-解决：
+。。。
 
-- 将app.py中的
+# 6、我的产品
 
-    ```python
-    with open('static/json/image_text.json', 'r') as f:
-    	image_text = json.load(f)
-    ```
+## 6.1 服务器
 
-    改为
+### 6.1.1 `47.113.205.127`
 
-    ```python
-    with open('static/json/image_text.json', 'r', encoding='gbk') as f:
-    	image_text = json.load(f)
-    ```
+#### 6.1.1.1 时间
 
-参考：https://bobbyhadz.com/blog/python-unicodedecodeerror-utf-8-codec-cant-decode-byte
+2023年8月25日 13:00:00 创建，2024年3月25日 23:59:59 到期，共7个月
 
-==qa==
+#### 6.1.1.2 配置信息
+
+- 提供服务云厂商：阿里云
+
+- 操作系统：Alibaba Cloud Linux 3.2104 LTS 64位
+
+- 运行内存：1核2G
+
+- 系统内存：40G
+
+```bash
+[root@DwjDemo1 ~]# cat /etc/os-release
+
+NAME="Alibaba Cloud Linux"								发行版的名称
+VERSION="3 (Soaring Falcon)"							发行版的版本号
+ID="alinux"												唯一的标识符
+ID_LIKE="rhel fedora centos anolis"						一些类似的发行版
+VERSION_ID="3"											发行版的版本编号
+PLATFORM_ID="platform:al8"								平台的标识符
+PRETTY_NAME="Alibaba Cloud Linux 3 (Soaring Falcon)"	可读的发行版名称和版本号
+ANSI_COLOR="0;31"										ANSI终端输出的颜色: "0;31"，通常用于表示错误或警告信息
+HOME_URL="https://www.aliyun.com/"						发行版的官方网站链接
+```
+
+#### 6.1.1.3 部署情况
+
+- flask项目，见上述第5大点
+
+### 6.1.2 `000.000.000.000`
+
+#### 6.1.2.1 时间
+
+#### 6.1.2.2 配置信息
+
+- 提供云服务厂商：
+
+#### 6.1.2.3 部署情况
+
+- 部署Docsify
+
+    > 简介：Docsify是一款基于md的网站渲染引擎
+    >
+    > Node.js是一个基于 Chrome V8 引擎的 JavaScript 运行环境
+
+## 6.2 域名
+
+### 6.2.1 `dwj601.love`
+
+#### 6.2.1.1 时间
+
+2023-07-07 00:03:00 创建，2024-07-07 00:03:00到期，共一年
+
+#### 6.2.1.2 配置信息
+
+- 提供云服务厂商：腾讯云
+- 
+
+### 6.2.2 `dwj601.cn`
+
+#### 6.2.2.1 时间
+
+2023-08-26 23:26:07 创建，2024-08-26 23:26:07 到期，共一年
+
+#### 6.2.2.2 配置信息
+
+- 提供云服务厂商：阿里云
+- 
+
+### 6.2.3 `yunjin123.cn`
+
+#### 6.2.3.1 时间
+
+#### 6.2.3.2 配置信息
+
+- 提供云服务厂商：
+- 
