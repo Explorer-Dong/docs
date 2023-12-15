@@ -1,7 +1,7 @@
 ## Intr
 
-- 网站基于$docsify$ 框架
-- 文档分站的资源备份与网页设计
+- frame: base on [docsify](https://docsify.js.org/#/zh-cn/quickstart)
+- content: learning record
 
 ## Contact
 
