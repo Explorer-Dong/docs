@@ -396,13 +396,13 @@ CSS 可以通过以下方式添加到HTML中:
 
 ELK组件
 
-![image-20230604104859769](https://s2.loli.net/2023/08/27/1jne3Ioh24b6wFg.png)
+<img src="https://s2.loli.net/2023/08/27/1jne3Ioh24b6wFg.png" alt="image-20230604104859769" style="zoom:67%;" />
 
 ---
 
 正向索引与倒排索引
 
-![image-20230604111402280](https://s2.loli.net/2023/08/27/FusazwLeWoimb4T.png)
+<img src="https://s2.loli.net/2023/08/27/FusazwLeWoimb4T.png" alt="image-20230604111402280" style="zoom:50%;" />
 
 - 正向索引：
 
@@ -421,7 +421,7 @@ ELK组件
 
 架构：ES与数据库的关系
 
-![image-20230604113740076](https://s2.loli.net/2023/08/27/sxKrHwWOC8pf21g.png)
+<img src="https://s2.loli.net/2023/08/27/sxKrHwWOC8pf21g.png" alt="image-20230604113740076" style="zoom: 67%;" />
 
 ---
 
@@ -511,24 +511,20 @@ if __name__ == "__main__":
 
 一个云服务器相当于一个抽象类的类，在其中购买配置了指定的实例后相当于实例化一个类，从而一个云服务器对应一个实例
 
-### 4.1.2 单服务器+一级域名=多网站
-
-
-
-### 4.1.3 关于域名解析延时与80端口
+### 4.1.2 关于域名解析延时与80端口
 
 在给购买好的域名进行解析的时候，即指向自己服务器的公网IP的时候，可能会有一段时间的延时。但其实可能是没有给云服务器放通80端口导致的
 
-### 4.1.4 关于备案
+### 4.1.3 关于备案
 
 当前的形式是，对于指向中国大陆ip（一台服务器对应一个ip）的域名需要备案，如果指向的是非中国大陆的ip，则域名就不需要备案了
 
-### 4.1.5 关于SSL证书
+### 4.1.4 关于SSL证书
 
 - http协议默认使用的是80端口，
 - 而申请了SSL证书后，通过https协议访问的网站默认使用的是443端口，因此需要提前在实例的**安全组**中，放通443端口
 
-### 4.1.6 关于SSL证书的签发
+### 4.1.5 关于SSL证书的签发
 
 - 如果是基于bt面板操作的话。可以通过ssl选项中“Let's Encrypt”的选项免费申请三个月的用量
 
@@ -536,7 +532,7 @@ if __name__ == "__main__":
 
 - 由于是基于bt面板管理，需要打开**强制通过https进入**这个选项，从而直接默认使用https协议访问网站
 
-### 4.1.7 关于SSL证书的部署
+### 4.1.6 关于SSL证书的部署
 
 获得已签发的ssl证书后，下载下来，再通过bt面板进行部署
 
@@ -545,12 +541,12 @@ if __name__ == "__main__":
 
 ![image-20230826104235878](https://s2.loli.net/2023/08/27/qnCeXZwEHIh35fd.png)
 
-### 4.1.8 关于LNMP和LAMP
+### 4.1.7 关于LNMP和LAMP
 
 - LNMP是一组Linux操作系统下的Nginx、MySQL、PHP和Perl的组合安装包，常用于构建高性能的Web服务器。通过使用LNMP，可以快速搭建一个功能强大的网站系统
 - LAMP是指Linux、Apache、MySQL和PHP的组合，它是一个开源的Web开发平台。这个组合通常被用来构建高性能的Web应用程序
 
-### 4.1.9 关于bt面板
+### 4.1.8 关于bt面板
 
 简介：其实就是一个类windows的linux环境下的可视化管理工具
 
@@ -583,6 +579,103 @@ if __name__ == "__main__":
 > 我们通过不同的二级域名访问网站时，其实就是访问不同的文件夹中的文件信息，像这样：
 >
 > ![image-20230826011328462](https://s2.loli.net/2023/08/27/fwd8NXg2hDPvLsK.png)
+
+### 4.2.4 实现不同的域名访问不同的文件
+
+这时我们就需要配置 nginx 的代理服务器了， nginx 中的 nginx.conf 文件示例配置如下
+
+```bash
+##### example project #####
+server {
+    listen       443 ssl; # 监听的端口
+    server_name  test.cn; # 监听的网址
+
+    # ssl证书的相关文件路径
+    ssl_certificate      /usr/local/nginx/ssl/test.cn_bundle.pem;
+    ssl_certificate_key  /usr/local/nginx/ssl/test.cn.key;
+
+    ssl_session_cache    shared:SSL:1m;
+    ssl_session_timeout  5m;
+
+    ssl_ciphers  HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers  on;
+
+    # 项目路径
+    location / {
+        proxy_pass https://localhost:8080/; # 转向“本地”8080端口
+        # root path;  						# 根目录
+        # index demo.html;  				# 设置默认页
+        # proxy_pass  http://mysvr;  		# 请求转向 mysvr 定义的服务器列表
+        # deny 127.0.0.1;  					# 拒绝的ip
+        # allow 172.18.5.54; 				# 允许的ip       
+    }
+}
+```
+
+假如此时我们需要 docs.example.com 访问文档分站（静态），www.example.com 与 example.com 都访问主站（动态），我们就需要配置 nginx 中的 nginx.conf 文件，如下
+
+```bash
+#----- docs.example.com -----#
+server {
+    listen       443 ssl; 			# 监听的端口
+    server_name  docs.example.com; 	# 监听的网址
+
+    # ssl证书的相关文件路径
+    ssl_certificate      /usr/local/nginx/ssl/test.cn_bundle.pem;
+    ssl_certificate_key  /usr/local/nginx/ssl/test.cn.key;
+
+    ssl_session_cache    shared:SSL:1m;
+    ssl_session_timeout  5m;
+
+    ssl_ciphers  HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers  on;
+
+    # 项目路径
+    location / {
+        root /usr/web/docs;  				# 根目录
+    }
+}
+
+#----- www.example.com -----#
+server {
+    listen       443 ssl; 			# 监听的端口
+    server_name  www.example.com; 	# 监听的网址
+
+	# ssl证书的相关文件路径
+    ssl_certificate      /usr/local/nginx/ssl/b.test.cn_bundle.pem;
+    ssl_certificate_key  /usr/local/nginx/ssl/b.test.cn.key;
+
+    ssl_session_cache    shared:SSL:1m;
+    ssl_session_timeout  5m;
+
+    ssl_ciphers  HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers  on;
+
+    location / {
+		root /usr/web/www;  				# 根目录
+    }
+}
+
+#----- example.com -----#
+server {
+    listen       443 ssl; 			# 监听的端口
+    server_name  www.example.com; 	# 监听的网址
+
+	# ssl证书的相关文件路径
+    ssl_certificate      /usr/local/nginx/ssl/b.test.cn_bundle.pem;
+    ssl_certificate_key  /usr/local/nginx/ssl/b.test.cn.key;
+
+    ssl_session_cache    shared:SSL:1m;
+    ssl_session_timeout  5m;
+
+    ssl_ciphers  HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers  on;
+
+    location / {
+		proxy_pass  https://www;  			# 请求转向 mysvr 定义的服务器列表
+    }
+}
+```
 
 # 5、部署flask
 
@@ -711,7 +804,7 @@ SQLALCHEMY_DATABASE_URI = DB_URI
 
 ### 5.3.2 安装Nginx并启动
 
-进入[nginx官网](http://nginx.org/en/download.html)并下载稳定版至本地：<img src="C:/Users/%E8%91%A3%E6%96%87%E6%9D%B0/AppData/Roaming/Typora/typora-user-images/image-20231208234403083.png" alt="image-20231208234403083" style="zoom: 50%;" />
+进入[nginx官网](http://nginx.org/en/download.html)并下载稳定版至本地：<img src="https://s2.loli.net/2023/12/15/bktJ4lHNhBMjo1p.png" alt="image-20231208234403083" style="zoom: 50%;" />
 
 上传服务器（直接通过mobaxterm拖拽）并解压到当前目录下并进入nginx文件夹
 
@@ -899,10 +992,10 @@ python app.py
 >     ```bash
 >     # 检测端口占用 
 >     netstat -npl | grep "端口"
->             
+>                     
 >     # 查找占用端口的进程的PID
 >     sudo lsof -i:"端口"
->             
+>                     
 >     # 根据PID杀死该进程
 >     sudo kill -9 <PID>
 >     ```
