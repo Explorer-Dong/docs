@@ -1,11 +1,13 @@
+<!-- docs/content/README.md -->
+
+<!-- 当前页面是进入当前目录默认加载的 -->
+
 ## hello~
 
-> 欢迎访问小D轻站~
+- :smile: welcome to my light web of documents
 
->启动本地服务的指令
->```bash
->cd /
->cd /d e:
->cd E:\A_web_design\docs.dwj601.cn
->docsify serve docs
->```
+- :wrench: the command to start local service
+
+    ```bash
+    cd /d E:\A_web_design\dwj601.cn && docsify serve docs
+    ```

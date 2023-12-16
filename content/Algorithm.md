@@ -1,4 +1,4 @@
-# 一、解题记录
+# 一、Record
 
 ## implementation
 
@@ -4008,7 +4008,7 @@ void solve() {
 }
 ```
 
-# 二、模板
+# 二、Template
 
 ## 高精度
 

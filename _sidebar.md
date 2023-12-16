@@ -1,8 +1,9 @@
-<!-- 侧边导航栏_sidebar.md -->
+<!-- docs/_sidebar.md -->
 
-- Begin
-  - [自我介绍](/content/Begin.md)
-- Record
-  - [Web](/content/Web.md)
-  - [Algorithm](/content/Algorithm.md)
-  - [23CUMCM](/content/23CUMCM.md)
+<!-- global sidebar -->
+
+- [Web](/content/Web.md)
+
+- [Algorithm](/content/Algorithm.md)
+
+- [23CUMCM](/content/23CUMCM.md)

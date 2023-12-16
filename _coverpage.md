@@ -1,10 +1,11 @@
-<!-- 封面页_coverpage.md -->
+<!-- docs/_coverpage.md -->
 
-> 小 D 同学 の 技术文档
+> Explorer-Dong の tech document
 
-> welcome！
+> :smile:welcome:smile:
 
-- Copyright © 2023 小 D 同学 All Rights Reserved.
+- Copyright © 2023 Explorer-Dong All Rights Reserved.
 
-[CSDN](https://blog.csdn.net/qq_73408594?type=blog)
-[开始阅读](/content)
+[GitHub](https://github.com/Explorer-Dong/)
+[开始阅读](/content/)
+
